@@ -25,6 +25,8 @@ export function SongContent({ song }: { song: Song }) {
     effective === "malayalam" ? song.titleMalayalam || song.title : song.title;
   const alternateTitle =
     effective === "malayalam" ? song.title : song.titleMalayalam;
+  const lyrics =
+    effective === "malayalam" ? song.lyricsMalayalam : song.lyricsManglish;
   return (
     <View style={{ gap: 18 }}>
       <View style={{ gap: 8 }}>
@@ -110,18 +112,24 @@ export function SongContent({ song }: { song: Song }) {
           />
         </View>
       </View>
-      <Text
-        selectable
-        style={{
-          color: theme.ink,
-          fontFamily: effective === "malayalam" ? "Malayalam" : undefined,
-          fontSize: preferences.fontSize,
-          lineHeight:
-            preferences.fontSize * (effective === "malayalam" ? 1.75 : 1.65),
-        }}
-      >
-        {effective === "malayalam" ? song.lyricsMalayalam : song.lyricsManglish}
-      </Text>
+      <View style={{ gap: preferences.fontSize * 0.4 }}>
+        {/* Keep verse breaks without rendering full-height empty text lines. */}
+        {lyrics.split(/\r?\n\s*\r?\n/).map((verse, index) => (
+          <Text
+            key={index}
+            selectable
+            style={{
+              color: theme.ink,
+              fontFamily: effective === "malayalam" ? "Malayalam" : undefined,
+              fontSize: preferences.fontSize,
+              lineHeight:
+                preferences.fontSize * (effective === "malayalam" ? 1.5 : 1.45),
+            }}
+          >
+            {verse}
+          </Text>
+        ))}
+      </View>
       {!!song.credits && (
         <View style={{ gap: 6 }}>
           <Copy style={{ fontWeight: "600" }}>Credits</Copy>
