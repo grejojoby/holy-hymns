@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Linking, Platform, View } from "react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
+import Constants from "expo-constants";
 import { GoogleButton } from "../components/GoogleButton";
 import { useApp } from "../hooks/AppContext";
 import { useResource } from "../hooks/useResource";
@@ -33,6 +34,7 @@ export type AuthMode =
   | "reset-password"
   | "accept-invitation";
 export type AuthLink = { mode: AuthMode; token: string; key: number };
+const appleSignInEnabled = Constants.expoConfig?.ios?.usesAppleSignIn !== false;
 export function AccountScreen({
   openAdmin,
   authLink,
@@ -69,6 +71,7 @@ export function AccountScreen({
   );
   const config = useResource<AppConfig>("/config", revision);
   useEffect(() => {
+    if (!appleSignInEnabled) return;
     void AppleAuthentication.isAvailableAsync().then(setAppleAvailable);
   }, []);
   useEffect(() => {

@@ -17,6 +17,25 @@ Native commands create a local development build. Google authentication needs th
 
 Native identifiers default to `org.holyhymns.app`. Set `IOS_BUNDLE_ID` and `ANDROID_PACKAGE` before registering OAuth clients or signing releases. No EAS subscription is needed: archive the generated iOS project in Xcode and build/sign an Android app bundle with Gradle or Android Studio.
 
+## Install a Release build on your iPhone
+
+Sign in to your Apple Account in Xcode, connect and trust the iPhone, and enable Developer Mode on it. From `mobile/`, set the signing team shown by Xcode and the live API before generating and building the app:
+
+```sh
+export EXPO_PUBLIC_API_URL=https://holyhymns-backend.grejo.in/v1
+export IOS_APPLE_TEAM_ID=YOUR_TEAM_ID
+# Required for a free Personal Team; omit for a team with Apple Sign in enabled.
+export IOS_APPLE_SIGN_IN_ENABLED=false
+npx expo prebuild --platform ios --no-install
+npx expo run:ios --device --configuration Release
+```
+
+Replace `YOUR_TEAM_ID` with your team identifier. Expo SDK 57 prebuild regenerates the ignored native iOS project by default, removing prior manual native edits and installed Pods. To apply configuration to an existing native project while preserving its Pods, add `--no-clean`. `IOS_APPLE_TEAM_ID` configures signing; private signing credentials stay in Xcode. `IOS_APPLE_SIGN_IN_ENABLED` defaults to `true`; only the exact value `false` removes Apple Sign in from the generated entitlements and hides its login button. A local config plugin also handles Expo's automatically applied Apple plugin; the runtime library remains installed. Browsing and email accounts remain supported in a Personal Team build.
+
+The Release app embeds its JavaScript and fonts, so it runs without Metro or the Mac after installation; catalogue access still needs internet. Free Personal Team provisioning expires after seven days, requiring a rebuild and reinstall. [Apple's Personal Team limits](https://developer.apple.com/help/account/basics/about-your-developer-account), [Expo local builds](https://docs.expo.dev/guides/local-app-development/).
+
+For Xcode 27 / iOS 27, the existing `expo-build-properties` configuration enables `ios.enableSceneSupport`. Expo SDK 57 requires this opt-in so the generated app uses its scene delegate; otherwise iOS 27 stops it at launch. Keep Expo at 57.0.23 or newer and regenerate native configuration after changing this setting. The native configuration test generates an isolated project from the installed template to verify scene startup, links, splash configuration, and Personal Team entitlements. [Expo's SDK 57 scene lifecycle guidance](https://github.com/expo/fyi/blob/main/ios-scene-lifecycle.md#staying-on-sdk-57-with-xcode-27).
+
 ## Provider configuration
 
 Email/password authentication works against the self-hosted API. The app supports verification, password reset and admin invitation deep links: `holyhymns://auth/verify?token=…`, `holyhymns://auth/reset-password?token=…`, `holyhymns://auth/accept-invitation?token=…`. Manual token-entry screens are available too. An invitation for an existing account must be accepted while signed in to that account.

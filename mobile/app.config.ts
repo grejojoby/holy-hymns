@@ -1,5 +1,6 @@
 import type { ExpoConfig } from "expo/config";
 
+const appleSignInEnabled = process.env.IOS_APPLE_SIGN_IN_ENABLED !== "false";
 const iosGoogleID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 const googleScheme =
   process.env.GOOGLE_IOS_URL_SCHEME ||
@@ -16,8 +17,9 @@ const config: ExpoConfig = {
   userInterfaceStyle: "automatic",
   ios: {
     bundleIdentifier: process.env.IOS_BUNDLE_ID || "org.holyhymns.app",
+    appleTeamId: process.env.IOS_APPLE_TEAM_ID || undefined,
     supportsTablet: true,
-    usesAppleSignIn: true,
+    usesAppleSignIn: appleSignInEnabled,
     infoPlist: { ITSAppUsesNonExemptEncryption: false },
   },
   android: {
@@ -42,6 +44,7 @@ const config: ExpoConfig = {
       "expo-build-properties",
       {
         ios: {
+          enableSceneSupport: true,
           extraPods: [
             { name: "GoogleUtilities", modular_headers: true },
             { name: "RecaptchaInterop", modular_headers: true },
@@ -49,7 +52,7 @@ const config: ExpoConfig = {
         },
       },
     ],
-    "expo-apple-authentication",
+    "./plugins/with-optional-apple-sign-in",
     ...(googleScheme
       ? [
           [
