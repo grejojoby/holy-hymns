@@ -12,6 +12,39 @@
     }
   ],
   "paths": {
+    "/auth/{action}": {
+      "servers": [
+        {
+          "url": "http://localhost:8080",
+          "description": "Account-link landing pages are outside the versioned API prefix."
+        }
+      ],
+      "parameters": [
+        {
+          "name": "action",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "enum": ["verify", "reset-password", "accept-invitation"]
+          }
+        }
+      ],
+      "get": {
+        "summary": "Open an account email link in a browser or the installed app",
+        "description": "Read-only HTML landing page. The email supplies #token=... in the URL fragment, never in an HTTP query parameter. GET and HEAD do not look up or consume tokens. The visitor can explicitly open the existing holyhymns:// app link, copy the code, or verify their email through POST /v1/auth/verify. No session is created. Assets at /auth/link.js and /auth/link.css are embedded in the API. Responses use no-store, no-referrer and a restrictive content security policy.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Landing page; token validity is checked only on an explicit account action.",
+            "content": {
+              "text/html": { "schema": { "type": "string" } }
+            }
+          },
+          "404": { "description": "Unsupported account action" }
+        }
+      }
+    },
     "/songs": {
       "get": {
         "summary": "Published songs, ranked bilingual search",

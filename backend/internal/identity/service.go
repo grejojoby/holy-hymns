@@ -127,6 +127,7 @@ func (s *Service) Optional(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 func (s *Service) Register(mux *http.ServeMux) {
+	registerAuthLinks(mux)
 	mux.HandleFunc("POST /v1/auth/register", s.limited(s.register))
 	mux.HandleFunc("POST /v1/auth/login", s.limited(s.login))
 	mux.HandleFunc("GET /v1/auth/me", s.Require("reader", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, 200, Current(r)) }))

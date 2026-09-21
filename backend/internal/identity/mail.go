@@ -157,8 +157,9 @@ func (s *Service) queueAction(ctx context.Context, tx pgx.Tx, userID, email, pur
 		subject = "Holy Hymns administrator invitation"
 		explanation = "The owner invited you to administer Holy Hymns. If you already have an account, sign in before accepting."
 	}
-	link := "holyhymns://auth/" + path + "?token=" + url.QueryEscape(token)
-	body := fmt.Sprintf("%s\n\nOpen this link on the device with Holy Hymns installed:\n%s\n\nYou can also paste this token into the app's %s screen:\n%s\n\nThis link expires in %d hours and can be used once. If you did not request this, ignore this email.\n\nHoly Hymns — %s\n", explanation, link, path, token, int(lifetime.Hours()), s.cfg.PublicURL)
+	// Fragments stay in the browser, out of reverse-proxy and server access logs.
+	link := strings.TrimRight(s.cfg.PublicURL, "/") + "/auth/" + path + "#token=" + url.QueryEscape(token)
+	body := fmt.Sprintf("%s\n\nOpen this secure link in your browser, then choose Open Holy Hymns to continue in the app. Email verification can also be completed in the browser:\n%s\n\nYou can also paste this token into the app's %s screen:\n%s\n\nThis link expires in %d hours and can be used once. If you did not request this, ignore this email.\n\nHoly Hymns — %s\n", explanation, link, path, token, int(lifetime.Hours()), s.cfg.PublicURL)
 	encrypted, err := s.encryptMail(email, mailPayload{Subject: subject, Body: body})
 	if err != nil {
 		return err

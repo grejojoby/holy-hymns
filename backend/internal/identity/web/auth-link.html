@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Continue to Holy Hymns</title>
+    <link rel="stylesheet" href="./link.css" />
+    <script src="./link.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <p class="brand">HOLY HYMNS</p>
+      <h1 id="title">Continue to Holy Hymns</h1>
+      <p id="description">A secure step for your account.</p>
+      <div id="controls" hidden>
+        <a id="open-app" class="button" href="holyhymns://">Open Holy Hymns</a>
+        <button id="verify" class="button secondary" type="button" hidden>
+          Verify in browser
+        </button>
+        <p id="app-help" class="hint">
+          On your phone, tap Open Holy Hymns and allow your browser to open the
+          app. If nothing happens, try Safari or Chrome, or use the code below.
+        </p>
+      </div>
+      <p id="status" role="status" aria-live="polite" aria-atomic="true">
+        Enable JavaScript to use this page, or paste the code from your email
+        into Holy Hymns.
+      </p>
+      <details id="manual" hidden>
+        <summary>Use the code manually</summary>
+        <p id="manual-help">
+          Paste this code into the matching screen in Holy Hymns.
+        </p>
+        <label for="token">One-time code</label>
+        <input id="token" readonly autocomplete="off" spellcheck="false" />
+        <button id="copy" class="button secondary" type="button">
+          Copy code
+        </button>
+      </details>
+      <footer>
+        Only continue if you requested this email or expected an invitation.
+        Never share this link or code.
+      </footer>
+    </main>
+  </body>
+</html>

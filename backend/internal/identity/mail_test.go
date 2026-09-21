@@ -138,7 +138,7 @@ func TestOutboxWorkerDeliversAndErasesActionPayload(t *testing.T) {
 	}
 	select {
 	case body := <-received:
-		if !strings.Contains(body, "holyhymns://auth/verify?token=") {
+		if !strings.Contains(body, "https://hymns.example/auth/verify#token=") {
 			t.Fatal("missing action URL")
 		}
 	case err := <-serverError:

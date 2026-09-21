@@ -1,0 +1,136 @@
+:root {
+  color-scheme: light dark;
+  --paper: #fafaf8;
+  --surface: #ffffff;
+  --ink: #242925;
+  --muted: #59645c;
+  --line: #d8ded9;
+  --accent: #38614c;
+  --button-ink: #fafaf8;
+}
+* {
+  box-sizing: border-box;
+}
+[hidden] {
+  display: none !important;
+}
+body {
+  margin: 0;
+  padding: 3rem 1rem;
+  background: var(--paper);
+  color: var(--ink);
+  font:
+    1rem/1.6 system-ui,
+    -apple-system,
+    sans-serif;
+}
+main {
+  width: 100%;
+  max-width: 30rem;
+  margin: 0 auto;
+  padding: 2rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--surface);
+}
+.brand {
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.125em;
+}
+h1 {
+  margin: 1.5rem 0 0.75rem;
+  font-size: 1.75rem;
+  line-height: 1.2;
+  font-weight: 600;
+}
+p {
+  margin: 0.75rem 0 1.5rem;
+}
+.button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 3rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.5rem;
+  background: var(--accent);
+  color: var(--button-ink);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.secondary {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line);
+}
+.button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+.hint,
+footer,
+#manual-help {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+#status {
+  font-weight: 600;
+}
+details {
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+}
+summary {
+  cursor: pointer;
+  padding: 0.5rem 0;
+}
+label {
+  display: block;
+  font-size: 0.875rem;
+}
+input {
+  width: 100%;
+  min-height: 3rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--muted);
+  border-radius: 0.25rem;
+  background: var(--paper);
+  color: var(--ink);
+  font: 1rem monospace;
+}
+footer {
+  margin-top: 2rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+}
+@media (max-width: 24rem) {
+  body {
+    padding: 1rem;
+  }
+  main {
+    padding: 1.5rem;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #171a18;
+    --surface: #202521;
+    --ink: #f2f4f1;
+    --muted: #b7c0b9;
+    --line: #3d493f;
+    --accent: #a8ceb2;
+    --button-ink: #171a18;
+  }
+}

@@ -163,6 +163,8 @@ func TestEmailRegistrationVerificationResetAndSessionRevocation(t *testing.T) {
 	registered := request(t, s, "POST", "/v1/auth/register", "", credentials{Email: email, Password: "a valid long password", Name: "Reader"})
 	requireStatus(t, registered, 200)
 	verifyToken := queuedToken(t, s, email)
+	// Email scanners may preview a link; only the explicit POST verifies it.
+	requireStatus(t, request(t, s, "GET", "/auth/verify", "", nil), 200)
 	requireStatus(t, request(t, s, "POST", "/v1/auth/login", "", map[string]string{"email": email, "password": "a valid long password"}), 403)
 	requireStatus(t, request(t, s, "POST", "/v1/auth/verify", "", map[string]string{"token": verifyToken}), 200)
 	requireStatus(t, request(t, s, "POST", "/v1/auth/verify", "", map[string]string{"token": verifyToken}), 400)
