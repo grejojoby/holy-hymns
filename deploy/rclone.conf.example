@@ -1,0 +1,14 @@
+# TEMPLATE ONLY: copy outside version control and supply your real OCI values.
+# Use a previously created private bucket; no_check_bucket forbids bucket creation.
+# Do not use native oracleobjectstorage type with this S3-compatible configuration.
+[oci]
+type = s3
+provider = Other
+env_auth = false
+access_key_id =
+secret_access_key =
+region =
+endpoint =
+force_path_style = true
+no_check_bucket = true
+# endpoint format: https://NAMESPACE.compat.objectstorage.REGION.oraclecloud.com

@@ -1,0 +1,15 @@
+{
+ email {$ACME_EMAIL}
+}
+{$DOMAIN} {
+ header {
+  X-Content-Type-Options nosniff
+  Referrer-Policy no-referrer
+  -Server
+ }
+ reverse_proxy api:8080 {
+  # SSE Content-Type also makes Caddy flush immediately.
+  flush_interval -1
+  header_up X-Real-IP {remote_host}
+ }
+}

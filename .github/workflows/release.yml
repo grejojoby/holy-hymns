@@ -1,0 +1,123 @@
+name: Build and deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never interrupt a deployment in the middle of a database migration.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  checks:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/ci.yml
+
+  images:
+    name: Publish AMD64 and ARM64 images
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      api: ${{ steps.refs.outputs.api }}
+      backup: ${{ steps.refs.outputs.backup }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
+        with:
+          platforms: arm64
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push API
+        id: api
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          file: backend/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/grejojoby/holy-hymns:${{ github.sha }}
+          labels: org.opencontainers.image.source=https://github.com/grejojoby/holy-hymns
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=min,scope=api
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: 'false'
+      - name: Build and push backup worker
+        id: backup
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          file: deploy/backup.Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ghcr.io/grejojoby/holy-hymns-backup:${{ github.sha }}
+          labels: org.opencontainers.image.source=https://github.com/grejojoby/holy-hymns
+          cache-from: type=gha,scope=backup
+          cache-to: type=gha,mode=min,scope=backup
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: 'false'
+      - name: Record immutable deployment references
+        id: refs
+        env:
+          API_DIGEST: ${{ steps.api.outputs.digest }}
+          BACKUP_DIGEST: ${{ steps.backup.outputs.digest }}
+        run: |
+          [[ "$API_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+          [[ "$BACKUP_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+          api="ghcr.io/grejojoby/holy-hymns@$API_DIGEST"
+          backup="ghcr.io/grejojoby/holy-hymns-backup@$BACKUP_DIGEST"
+          printf 'api=%s\nbackup=%s\n' "$api" "$backup" >> "$GITHUB_OUTPUT"
+          printf 'Built both linux/amd64 and linux/arm64.\n\nAPI: `%s`\n\nBackup: `%s`\n' "$api" "$backup" >> "$GITHUB_STEP_SUMMARY"
+      - name: Explain deployment setup
+        if: vars.DEPLOY_ENABLED != 'true'
+        run: echo 'Images published. Configure the VM secrets and set DEPLOY_ENABLED=true to enable deployment; see docs/ci-cd.md.' >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy to Oracle VM
+    needs: images
+    if: github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Upload release and run Docker Compose
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+          VM_KNOWN_HOSTS: ${{ secrets.VM_KNOWN_HOSTS }}
+          VM_DEPLOY_PATH: ${{ vars.VM_DEPLOY_PATH || '/opt/holy-hymns' }}
+          VM_SSH_PORT: ${{ vars.VM_SSH_PORT || '22' }}
+          RELEASE_ID: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          API_IMAGE: ${{ needs.images.outputs.api }}
+          BACKUP_IMAGE: ${{ needs.images.outputs.backup }}
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/deploy_over_ssh.py
+      - name: Deployment summary
+        env:
+          REVISION: ${{ github.sha }}
+        run: printf 'Compose deployment passed migrations and health checks for `%s`.\n' "$REVISION" >> "$GITHUB_STEP_SUMMARY"

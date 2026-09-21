@@ -1,0 +1,4041 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Holy Hymns API",
+    "version": "1.0.0",
+    "description": "Self-hosted lyrics catalogue. Session authorization is checked on every protected request. All timestamps UTC. Public responses never contain drafts."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/v1",
+      "description": "Local development"
+    }
+  ],
+  "paths": {
+    "/songs": {
+      "get": {
+        "summary": "Published songs, ranked bilingual search",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SongList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "letter",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "featured",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "title",
+                "recent"
+              ],
+              "default": "title"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 30,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "maximum": 100000
+            }
+          }
+        ]
+      }
+    },
+    "/songs/{id}": {
+      "get": {
+        "summary": "Read a published song",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Song"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/categories": {
+      "get": {
+        "summary": "List browsing categories",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Category"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config": {
+      "get": {
+        "summary": "Read public app configuration and revision",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppConfig"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "summary": "Receive public content revision invalidations",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "SSE event: content; id: durable revision; data: {revision:number}. Reconcile on reconnect.",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "Register",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 254
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 12,
+                    "description": "At least 12 Unicode characters and at most 1024 UTF-8 bytes."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Optional display name; at most 200 UTF-8 bytes."
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Requires configured SMTP. Registration queues email verification; it does not return a session. A repeated registration never replaces existing credentials. Omit name to use an empty display name."
+      }
+    },
+    "/auth/verify": {
+      "post": {
+        "summary": "Verify",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Consume the single-use email-verification token; it expires after 24 hours. Sign in separately after success."
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "summary": "Forgot password",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Requires configured SMTP. Returns the same generic message for missing and eligible accounts. Reset links expire after one hour."
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "summary": "Reset password",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 12,
+                    "description": "At least 12 Unicode characters and at most 1024 UTF-8 bytes."
+                  }
+                },
+                "required": [
+                  "token",
+                  "password"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Consume a one-hour single-use reset token, replace the password, and revoke existing sessions. Sign in separately afterward."
+      }
+    },
+    "/auth/accept-invitation": {
+      "post": {
+        "summary": "Accept invitation",
+        "security": [
+          {},
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Required only for a new account; minimum 12 Unicode characters, maximum 1024 UTF-8 bytes."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Optional for a new account, at most 200 UTF-8 bytes. Existing account name is preserved."
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Invitation tokens expire after 48 hours. Existing accounts must authenticate with the invited account; their password/name are preserved. New accounts supply a password. Success grants admin access and revokes existing sessions; sign in afterward. This endpoint returns a message, not a session."
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Sign in with verified email and password",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Only verified, active accounts may sign in. Response token is an opaque revocable session. Attempts are limited by trusted client IP and account."
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Read active current account",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Revoke current session",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout-all": {
+      "post": {
+        "summary": "Revoke all sessions",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/account": {
+      "delete": {
+        "summary": "Delete account after recent reauthentication; owner protected",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "manualRevocationUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Present when an older linked Apple account has no stored grant. Local deletion succeeded; the user should remove the remaining Apple authorization using this URL."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "description": "Required when the account has a password; otherwise omit and send {} after a fresh social sign-in."
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Requires a JSON body. Password-bearing accounts must supply the current password. Social-only accounts must have signed in within the last ten minutes and may send {}. Provider, idToken and nonce are not accepted here. The last active verified owner cannot delete their account. Success deletes personal identity/session/favorite data; anonymized audit records and aggregate analytics remain. If Apple is linked and a grant is stored, the server revokes it before deleting local data; revocation failure leaves the account intact for retry. Historical Apple accounts with no stored grant are deleted and return manualRevocationUrl so the user can remove the remaining Apple authorization."
+      }
+    },
+    "/auth/providers": {
+      "get": {
+        "summary": "Read configured social providers",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "google": {
+                      "type": "boolean"
+                    },
+                    "apple": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Google requires configured client audiences. Apple requires configured audiences, valid team/key identifiers, a PKCS8 P-256 signing key, and the 32-byte encryption key used for retained grants."
+      }
+    },
+    "/auth/challenge": {
+      "get": {
+        "summary": "Create one-use provider nonce; send session when linking",
+        "security": [
+          {},
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "nonce": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "nonce"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Generate a single-use nonce valid for five minutes. Omit Authorization for social sign-in. For account linking, supply the existing account session so the challenge is bound to that user. Pass the nonce into the provider native sign-in request and then submit the same nonce with the returned ID token."
+      }
+    },
+    "/auth/social/{provider}": {
+      "post": {
+        "summary": "Verify provider identity and authenticate",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "google",
+                "apple"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "idToken": {
+                    "type": "string"
+                  },
+                  "nonce": {
+                    "type": "string"
+                  },
+                  "authorizationCode": {
+                    "type": "string",
+                    "description": "Required for Apple sign-in/linking: the fresh native authorization code, exchanged on the backend and stored as an encrypted refresh grant. Omit for Google."
+                  }
+                },
+                "required": [
+                  "idToken",
+                  "nonce"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Use an unauthenticated /auth/challenge nonce in the provider sign-in request. Tokens must contain the same nonce, a configured audience and subject, valid signature/issuer, and an issuance time within ten minutes. Email matches do not link accounts: sign in to an existing account and use /auth/link/{provider}. Apple additionally requires authorizationCode from the same native sign-in attempt."
+      }
+    },
+    "/auth/link/{provider}": {
+      "post": {
+        "summary": "Verify provider identity and link to authenticated account",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "google",
+                "apple"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "idToken": {
+                    "type": "string"
+                  },
+                  "nonce": {
+                    "type": "string"
+                  },
+                  "authorizationCode": {
+                    "type": "string",
+                    "description": "Required for Apple sign-in/linking: the fresh native authorization code, exchanged on the backend and stored as an encrypted refresh grant. Omit for Google."
+                  }
+                },
+                "required": [
+                  "idToken",
+                  "nonce"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "description": "Requires an existing-account session created within ten minutes and a fresh /auth/challenge requested with that same session. The provider ID token must contain the bound nonce. Linking does not issue a new session or merge accounts by email. Apple additionally requires authorizationCode from the same native sign-in attempt."
+      }
+    },
+    "/me/favorites": {
+      "get": {
+        "summary": "List own available favorite song identifiers",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/favorites/{id}": {
+      "put": {
+        "summary": "Save favorite",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Remove favorite",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/songs": {
+      "get": {
+        "summary": "List draft/editor snapshots; admin or owner",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SongList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 30,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "maximum": 100000
+            }
+          }
+        ],
+        "x-required-role": "admin"
+      },
+      "post": {
+        "summary": "Create unpublished song; admin or owner",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Song"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SongInput"
+              }
+            }
+          }
+        },
+        "x-required-role": "admin"
+      }
+    },
+    "/admin/songs/{id}": {
+      "get": {
+        "summary": "Read editor snapshot; admin or owner",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Song"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "x-required-role": "admin"
+      },
+      "put": {
+        "summary": "Save draft with version guard",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Song"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SongUpdateInput"
+              }
+            }
+          }
+        },
+        "x-required-role": "admin"
+      }
+    },
+    "/admin/songs/{id}/publish": {
+      "post": {
+        "summary": "Publish atomically and advance public revision",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "publish"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Version"
+              }
+            }
+          }
+        },
+        "x-required-role": "admin"
+      }
+    },
+    "/admin/songs/{id}/unpublish": {
+      "post": {
+        "summary": "Unpublish atomically and advance public revision",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "unpublish"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Version"
+              }
+            }
+          }
+        },
+        "x-required-role": "admin"
+      }
+    },
+    "/admin/songs/{id}/revisions": {
+      "get": {
+        "summary": "Read last 100 historical versions",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "version": {
+                            "type": "integer"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "content": {
+                            "$ref": "#/components/schemas/SongRevisionContent"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "x-required-role": "admin"
+      }
+    },
+    "/admin/songs/{id}/restore": {
+      "post": {
+        "summary": "Restore history into a new unpublished draft",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Song"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer"
+                  },
+                  "revisionId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                "required": [
+                  "version",
+                  "revisionId"
+                ]
+              }
+            }
+          }
+        },
+        "x-required-role": "admin"
+      }
+    },
+    "/admin/categories": {
+      "post": {
+        "summary": "Create category",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Category"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryInput"
+              }
+            }
+          }
+        },
+        "x-required-role": "admin"
+      }
+    },
+    "/admin/categories/{id}": {
+      "put": {
+        "summary": "Update category",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Category"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryUpdateInput"
+              }
+            }
+          }
+        },
+        "x-required-role": "admin",
+        "description": "Send the current category version with the complete editable fields. Stale versions return 409."
+      },
+      "delete": {
+        "summary": "Remove category and unlink active songs",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Current category version; missing or stale values return 409."
+          }
+        ],
+        "x-required-role": "admin"
+      }
+    },
+    "/admin/config": {
+      "put": {
+        "summary": "Update supported public app settings",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppConfig"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppConfigInput"
+              }
+            }
+          }
+        },
+        "x-required-role": "admin",
+        "description": "Requires the current config.version from GET /config. Do not use the global config.revision as the edit version. Stale versions return 409."
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "summary": "List accounts; administrator visibility is limited by role",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "total"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-required-role": "admin",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ]
+      }
+    },
+    "/admin/users/{id}": {
+      "put": {
+        "summary": "Suspend readers or owner-only administrator role changes",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "suspended": {
+                    "type": "boolean"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "reader",
+                      "admin",
+                      "owner"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "anyOf": [
+                  {
+                    "required": [
+                      "role"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "suspended"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "x-required-role": "admin",
+        "description": "Admins may suspend/unsuspend readers only. Owners may change reader/admin/owner roles and suspension. Owner promotion requires an active verified target. Removing, suspending or demoting the last active verified owner is forbidden. At least one field is required. Any change revokes the target account sessions. Initial bootstrap and emergency owner recovery use audited server commands."
+      }
+    },
+    "/admin/invitations": {
+      "post": {
+        "summary": "Owner invites an administrator by email",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "x-required-role": "owner",
+        "description": "Owner only. Requires configured SMTP. Queues an invitation valid for 48 hours; it does not grant access until accepted."
+      }
+    },
+    "/analytics": {
+      "post": {
+        "summary": "Opt-in aggregate events; staff activity excluded",
+        "security": [
+          {},
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "event": {
+                    "type": "string",
+                    "enum": [
+                      "song_open",
+                      "category_open",
+                      "search",
+                      "favorite"
+                    ]
+                  },
+                  "songId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "categoryId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "resultCount": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "event"
+                ],
+                "oneOf": [
+                  {
+                    "properties": {
+                      "event": {
+                        "enum": [
+                          "song_open",
+                          "favorite"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "songId"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "event": {
+                        "enum": [
+                          "category_open"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "categoryId"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "event": {
+                        "enum": [
+                          "search"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resultCount"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "description": "Optional reader session; valid admin/owner sessions are excluded. The client sends only after analytics consent. song_open/favorite require a published songId; category_open requires categoryId; search requires a nonnegative resultCount. No email or raw search text is stored in analytics."
+      }
+    },
+    "/admin/analytics": {
+      "get": {
+        "summary": "Aggregate daily events, popular songs and mail alerts",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "daily": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "date": {
+                            "type": "string"
+                          },
+                          "event": {
+                            "type": "string"
+                          },
+                          "count": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "topSongs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "count": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "totals": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "integer"
+                      }
+                    },
+                    "mailAlerts": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MailAlert"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Role or origin denied"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Version or identity conflict"
+          },
+          "429": {
+            "description": "Rate or free email quota exhausted"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          },
+          "500": {
+            "description": "Unexpected server or database failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 30,
+              "maximum": 90
+            }
+          }
+        ],
+        "x-required-role": "admin"
+      }
+    },
+    "/healthz": {
+      "servers": [
+        {
+          "url": "http://localhost:8080",
+          "description": "Health endpoint is outside the versioned API prefix."
+        }
+      ],
+      "get": {
+        "summary": "Database readiness",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/imports/lyrics": {
+      "post": {
+        "summary": "Import one extracted Grejo Lyrics post as a private draft",
+        "operationId": "importExtractedLyrics",
+        "description": "Administrator or owner only. Uses durable source ID/hash deduplication and never overwrites app edits or publishes content. Matching source/hash returns unchanged; a changed hash returns conflicts in the 200 report. A non-dry import commits draft, taxonomy, first revision, import run and lyrics.import actor audit atomically. Retry failed requests safely. Existing 1 MiB body limit applies; only one JSON object and documented fields are accepted.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LyricsImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import result or dry-run preview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid source, metadata, song content, JSON or oversized request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or revoked session"
+          },
+          "403": {
+            "description": "Reader or origin denied"
+          },
+          "500": {
+            "description": "Import or audit failed; retry safely using the same sourceId and hash. No partial import can commit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Server busy or transaction timed out; retry safely"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Opaque revocable account session, not a provider identity token."
+      }
+    },
+    "schemas": {
+      "Song": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "titleMalayalam": {
+            "type": "string"
+          },
+          "lyricsMalayalam": {
+            "type": "string"
+          },
+          "lyricsManglish": {
+            "type": "string"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "credits": {
+            "type": "string"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaLink"
+            }
+          },
+          "categoryIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "featured": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "reviewNotes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Administrative review notes; omitted from public song responses."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "titleMalayalam",
+          "lyricsMalayalam",
+          "lyricsManglish",
+          "aliases",
+          "credits",
+          "links",
+          "categoryIds",
+          "featured",
+          "version",
+          "status",
+          "updatedAt"
+        ]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "reader",
+              "admin",
+              "owner"
+            ]
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "suspended": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name",
+          "role",
+          "verified",
+          "suspended"
+        ]
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameMalayalam": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "purpose",
+              "occasion",
+              "theme"
+            ]
+          },
+          "position": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Optimistic edit version; send it when updating or deleting this category."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "nameMalayalam",
+          "kind",
+          "position",
+          "version"
+        ]
+      },
+      "AppConfig": {
+        "type": "object",
+        "properties": {
+          "appName": {
+            "type": "string"
+          },
+          "announcement": {
+            "type": "string"
+          },
+          "aboutText": {
+            "type": "string"
+          },
+          "supportEmail": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Configuration edit version, distinct from the global published content revision."
+          }
+        },
+        "required": [
+          "appName",
+          "announcement",
+          "aboutText",
+          "supportEmail",
+          "revision",
+          "version"
+        ]
+      },
+      "MediaLink": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "An absolute HTTPS URL without user-info; no media is fetched or hosted by the API."
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "Session": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        },
+        "required": [
+          "token",
+          "user"
+        ]
+      },
+      "SongList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Song"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ]
+      },
+      "Version": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ]
+      },
+      "SongInput": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "titleMalayalam": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "lyricsMalayalam": {
+            "type": "string"
+          },
+          "lyricsManglish": {
+            "type": "string"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 30
+          },
+          "credits": {
+            "type": "string"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaLink"
+            },
+            "maxItems": 10
+          },
+          "categoryIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 30
+          },
+          "featured": {
+            "type": "boolean"
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "reviewNotes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Administrative review notes; omitted from public song responses."
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "title"
+            ],
+            "properties": {
+              "title": {
+                "minLength": 1
+              }
+            }
+          },
+          {
+            "required": [
+              "titleMalayalam"
+            ],
+            "properties": {
+              "titleMalayalam": {
+                "minLength": 1
+              }
+            }
+          }
+        ],
+        "description": "Full editable draft content. At least one nonblank title is required. Both lyric scripts may be empty in drafts; publishing requires one. Omitted editable fields become their defaults; this is not a partial patch. Combined lyrics are limited to 200,000 UTF-8 bytes."
+      },
+      "SongUpdateInput": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SongInput"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "version"
+            ]
+          }
+        ],
+        "description": "Complete draft payload plus the current version. A stale version returns 409."
+      },
+      "MailAlert": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "occurrences": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "kind",
+          "message",
+          "occurrences",
+          "lastSeenAt"
+        ]
+      },
+      "CategoryInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "nameMalayalam": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "purpose",
+              "occasion",
+              "theme"
+            ]
+          },
+          "position": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "kind"
+        ]
+      },
+      "CategoryUpdateInput": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CategoryInput"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "version"
+            ]
+          }
+        ]
+      },
+      "AppConfigInput": {
+        "type": "object",
+        "properties": {
+          "appName": {
+            "type": "string"
+          },
+          "announcement": {
+            "type": "string"
+          },
+          "aboutText": {
+            "type": "string"
+          },
+          "supportEmail": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Configuration edit version, distinct from the global published content revision."
+          }
+        },
+        "required": [
+          "appName",
+          "version"
+        ],
+        "description": "Complete editable app settings plus the current configuration version. Omitted text fields become empty; this is not a partial patch."
+      },
+      "SongRevisionContent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "titleMalayalam": {
+            "type": "string"
+          },
+          "lyricsMalayalam": {
+            "type": "string"
+          },
+          "lyricsManglish": {
+            "type": "string"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "credits": {
+            "type": "string"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaLink"
+            }
+          },
+          "categoryIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "featured": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "reviewNotes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Administrative review notes; omitted from public song responses."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "titleMalayalam",
+          "lyricsMalayalam",
+          "lyricsManglish",
+          "aliases",
+          "credits",
+          "links",
+          "categoryIds",
+          "featured",
+          "version",
+          "status",
+          "updatedAt"
+        ],
+        "description": "Historical content as saved; metadata can be empty for initial imported/created snapshots. Use the enclosing revision id/version when restoring."
+      },
+      "LyricsImportEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sourceId",
+          "sourceUrl",
+          "hash"
+        ],
+        "description": "One extracted Grejo Lyrics post. At least one nonblank title is required. Lyrics together are limited to 200,000 UTF-8 bytes; no usable lyrics returns a skipped report. Null characters and RawHTML are not accepted. Labels are trimmed and deduplicated. Hash is normalized to lowercase.",
+        "properties": {
+          "sourceId": {
+            "type": "string",
+            "pattern": "^tag:blogger\\.com,1999:blog-6936100729546217639\\.post-[0-9]{1,32}$"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 2048,
+            "pattern": "^https://grejolyrics\\.blogspot\\.com/[0-9]{4}/(0[1-9]|1[0-2])/[A-Za-z0-9_-][A-Za-z0-9._~-]*\\.html$",
+            "description": "Canonical HTTPS post permalink only; maximum 2048 UTF-8 bytes. No credentials, port, query, fragment or escaped path."
+          },
+          "hash": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{64}$"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "titleMalayalam": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "lyricsMalayalam": {
+            "type": "string"
+          },
+          "lyricsManglish": {
+            "type": "string"
+          },
+          "credits": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "labels": {
+            "type": "array",
+            "maxItems": 30,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120,
+              "description": "Nonblank after trimming; no line breaks."
+            }
+          },
+          "reviewNotes": {
+            "type": "array",
+            "maxItems": 30,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            }
+          },
+          "links": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "label",
+                "url"
+              ],
+              "properties": {
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri",
+                  "maxLength": 2048,
+                  "pattern": "^https://",
+                  "description": "HTTPS URL with host and without credentials; at most 2048 UTF-8 bytes."
+                }
+              }
+            }
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "title"
+            ],
+            "properties": {
+              "title": {
+                "minLength": 1
+              }
+            }
+          },
+          {
+            "required": [
+              "titleMalayalam"
+            ],
+            "properties": {
+              "titleMalayalam": {
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      },
+      "LyricsImportRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "entry"
+        ],
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/LyricsImportEntry"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "default": false,
+            "description": "Read-only validation and preview; no song, category, revision, import run or audit is written."
+          }
+        }
+      },
+      "ImportReport": {
+        "type": "object",
+        "required": [
+          "total",
+          "created",
+          "unchanged",
+          "conflicts",
+          "skipped",
+          "review"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "created": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unchanged": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "conflicts": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "skipped": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "review": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

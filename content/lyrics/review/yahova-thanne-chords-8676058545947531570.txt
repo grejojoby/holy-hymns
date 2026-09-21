@@ -1,0 +1,76 @@
+Scale: D Major
+
+Time Signature: 4/4
+
+Tempo: 78
+
+Suggested Strumming: DU,DU,DU,DU
+
+INTRO]
+
+D C D C G D
+
+[Verse]
+D C
+Yahova Thanne Daivam Ennaravin
+G D C G D
+Kinnarathode Keerthanam Cheyvin
+D C
+Ente Daivamaaya Yahove Saukhyamakkaname
+G D
+Nee Enne Saukhyamaakkaname
+
+[Chorus]
+D C
+Ente daivamaya yahove karunayundakaname
+G D
+nee ente rekshakanakaname
+F A# D#
+Yahova thanne deyvamennarivin
+F A# G
+kinnarathode keerthanam cheyvin
+
+[INSTRUMENTAL]
+G C D Am D G
+
+[VERSE]
+C Em Am
+Yahove njan urakke vilikkumbol kelkkename
+D G D
+ennode krupa cheythu enikkutharam nee arulename
+G C
+Enne ninnodu cherkkename
+F A# D# G# D C G D
+Enne ninnodu cherkkename
+
+[Chorus]
+D C
+Ente daivamaya yahove saukhyamakkaname
+G D
+nee ente saukhyamakkaname
+F A# D#
+Sangeethathathode avante sannidhiyil varuvin
+F A# G C D
+Avanu sthothram cheythu avante naamathe vazhthuvin
+
+[INSTRUMENTAL]
+C D Am D G
+
+[VERSE]
+C Em Am
+Yahove ninte karunayum dhayayum orkkename
+D G D
+Thiru naamam nimitham neethi paathayil nadathename
+G C
+Enne ninnodu cherkkename
+F A# D# G# D Am D
+Ente prarthana kai kollane
+
+[CHORUS]
+D C
+Ente daivamaya yahove karunayundakaname
+G D
+Nee enne saukhyamakkaname
+
+[OUTRO]
+C G D C G D C G D C G D x2

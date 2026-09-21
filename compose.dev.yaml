@@ -1,0 +1,12 @@
+# Use together with compose.yaml: docker compose -f compose.yaml -f compose.dev.yaml up --build
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+  db:
+    ports: ["127.0.0.1:5432:5432"]

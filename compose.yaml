@@ -1,0 +1,147 @@
+name: holy-hymns
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "5m"
+    max-file: "3"
+x-app-env: &app-env
+  DATABASE_URL: postgres://holyhymns:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/holyhymns?sslmode=disable
+  HTTP_ADDR: ":8080"
+  DB_MAX_CONNS: "8"
+  TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-172.30.41.10/32}
+  PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8080}
+  ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:8081}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  SMTP_FROM: ${SMTP_FROM:-}
+  MAIL_ENCRYPTION_KEY: ${MAIL_ENCRYPTION_KEY:-}
+  MAIL_DAILY_LIMIT: ${MAIL_DAILY_LIMIT:-80}
+  MAIL_MONTHLY_LIMIT: ${MAIL_MONTHLY_LIMIT:-2000}
+  ALLOW_INSECURE_SMTP: ${ALLOW_INSECURE_SMTP:-false}
+  GOOGLE_CLIENT_IDS: ${GOOGLE_CLIENT_IDS:-}
+  APPLE_CLIENT_IDS: ${APPLE_CLIENT_IDS:-}
+  APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
+  APPLE_KEY_ID: ${APPLE_KEY_ID:-}
+  APPLE_PRIVATE_KEY: ${APPLE_PRIVATE_KEY:-}
+  GOMEMLIMIT: 160MiB
+  GOMAXPROCS: "2"
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: holyhymns
+      POSTGRES_USER: holyhymns
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    command: ["postgres", "-c", "shared_buffers=64MB", "-c", "work_mem=2MB", "-c", "maintenance_work_mem=32MB", "-c", "max_connections=20"]
+    volumes: ["postgres_data:/var/lib/postgresql/data"]
+    networks: [database]
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 100
+    shm_size: 64m
+    logging: *logging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U holyhymns -d holyhymns"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  migrate:
+    image: ${HOLY_HYMNS_IMAGE:-holy-hymns:local}
+    command: ["migrate"]
+    environment: *app-env
+    depends_on:
+      db: {condition: service_healthy}
+    networks: [database]
+    restart: "no"
+    mem_limit: 128m
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    logging: *logging
+  api:
+    image: ${HOLY_HYMNS_IMAGE:-holy-hymns:local}
+    environment: *app-env
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    ports: ["${API_BIND:-127.0.0.1}:${API_PORT:-8080}:8080"]
+    networks: [database, default]
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 100
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "/app/holyhymns", "health"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+  caddy:
+    image: caddy:2-alpine
+    profiles: [edge]
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    ports: ["80:80", "443:443", "443:443/udp"]
+    volumes:
+      - ${CADDY_CONFIG_FILE:-./deploy/Caddyfile}:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api: {condition: service_healthy}
+    networks:
+      default:
+        ipv4_address: ${CADDY_INTERNAL_IP:-172.30.41.10}
+    restart: unless-stopped
+    mem_limit: 96m
+    pids_limit: 100
+    logging: *logging
+  backup:
+    image: ${HOLY_HYMNS_BACKUP_IMAGE:-holy-hymns-backup:local}
+    profiles: [backup]
+    environment:
+      PGHOST: db
+      PGPORT: "5432"
+      PGDATABASE: holyhymns
+      PGUSER: holyhymns
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      RCLONE_CONFIG: /run/secrets/rclone.conf
+      BACKUP_REMOTE: ${BACKUP_REMOTE:-}
+      BACKUP_AGE_RECIPIENT: ${BACKUP_AGE_RECIPIENT:-}
+      OCI_FREE_QUOTA_VERIFIED: ${OCI_FREE_QUOTA_VERIFIED:-false}
+      OCI_VERIFIED_FREE_BYTES: ${OCI_VERIFIED_FREE_BYTES:-0}
+      BACKUP_STORAGE_CAP_BYTES: ${BACKUP_STORAGE_CAP_BYTES:-104857600}
+      BACKUP_MAX_ARCHIVE_BYTES: ${BACKUP_MAX_ARCHIVE_BYTES:-12582912}
+      BACKUP_HOUR_UTC: ${BACKUP_HOUR_UTC:-2}
+    volumes:
+      - ${RCLONE_CONFIG_FILE:-./deploy/rclone.conf}:/run/secrets/rclone.conf:ro
+    tmpfs: ["/tmp:size=128m,mode=1777"]
+    depends_on:
+      db: {condition: service_healthy}
+    networks: [database, default]
+    restart: unless-stopped
+    read_only: true
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 50
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+networks:
+  database:
+    internal: true
+  default:
+    ipam:
+      config:
+        - subnet: ${PROXY_NETWORK_SUBNET:-172.30.41.0/24}
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

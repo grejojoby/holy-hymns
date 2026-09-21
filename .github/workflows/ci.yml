@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: '1.25.5'
+          cache-dependency-path: backend/go.sum
+      - name: Vet, test with PostgreSQL, and build
+        env:
+          GO_BINARY: go
+        run: bash scripts/ci-backend.sh
+
+  mobile:
+    name: Mobile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run export:web
+      - run: npm run export:native
+      - run: npm audit --omit=dev --audit-level=high
+
+  tooling:
+    name: Tooling
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Lint GitHub workflows
+        run: |
+          actionlint_dir="$RUNNER_TEMP/actionlint"
+          mkdir -p "$actionlint_dir"
+          archive="$actionlint_dir/actionlint.tar.gz"
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' \
+            --retry 3 --connect-timeout 10 --max-time 120 \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz \
+            --output "$archive"
+          printf '%s  %s\n' '8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8' "$archive" | sha256sum --check --strict
+          tar -xzf "$archive" -C "$actionlint_dir" actionlint
+          "$actionlint_dir/actionlint" -shellcheck=
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13'
+      - name: Test scripts and validate the lyrics bundle
+        run: |
+          python3 -m unittest discover -s scripts -p 'test_*.py'
+          python3 scripts/upload_lyrics.py --validate-only
+      - name: Validate every Compose profile
+        run: |
+          docker compose --env-file .env.example --profile '*' -f compose.yaml config --quiet
+          docker compose --env-file .env.example --profile '*' -f compose.yaml -f compose.dev.yaml config --quiet
+      - name: Check shell syntax
+        run: |
+          while IFS= read -r -d '' script; do
+            bash -n "$script"
+          done < <(rg --files --null scripts deploy -g '*.sh')

@@ -1,0 +1,51 @@
+{
+  "name": "holy-hymns",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start --dev-client",
+    "web": "expo start --web",
+    "ios": "expo run:ios",
+    "android": "expo run:android",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test src/lib/*.test.ts",
+    "export:web": "expo export --platform web",
+    "export:native": "expo export --platform ios --platform android"
+  },
+  "dependencies": {
+    "@expo-google-fonts/noto-sans-malayalam": "^0.4.2",
+    "@expo/vector-icons": "^15.1.1",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "expo": "^57.0.24",
+    "expo-apple-authentication": "^57.0.2",
+    "expo-build-properties": "~57.0.21",
+    "expo-dev-client": "^57.0.19",
+    "expo-font": "^57.0.4",
+    "expo-keep-awake": "^57.0.2",
+    "expo-linking": "^57.0.10",
+    "expo-secure-store": "^57.0.4",
+    "expo-splash-screen": "~57.0.9",
+    "expo-status-bar": "^57.0.1",
+    "expo-system-ui": "~57.0.4",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-nitro-google-signin": "^2.2.0",
+    "react-native-nitro-modules": "^0.37.1",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-web": "^0.21.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "@types/react": "~19.2.4",
+    "prettier": "^3.9.8",
+    "tsx": "^4.23.13",
+    "typescript": "~6.0.3"
+  },
+  "overrides": {
+    "xcode": {
+      "uuid": "^11.1.1"
+    }
+  }
+}
