@@ -16,6 +16,6 @@ SHA-256 of the consolidated Atom file:
 b8d0bc13e76228f790d72099777c94d9515f68a11a788407b85ed09cae55d694
 ```
 
-The reviewed parser identifies 288 draft candidates, with 46 Malayalam and 279 Manglish files (37 songs have both). It excludes 43 posts from automatic upload, retaining original HTML and review material for unsupported languages, chord notation, collections, index pages and media-only entries. See [the extracted folder and upload instructions](lyrics/README.md).
+The reviewed parser identifies 288 draft candidates. Source posts supplied 46 Malayalam and 279 Manglish files (37 with both); missing counterparts were later filled by phonetic transliteration so every candidate now has both scripts. It excludes 43 posts from automatic upload, retaining original HTML and review material for unsupported languages, chord notation, collections, index pages and media-only entries. See [the extracted folder and upload instructions](lyrics/README.md).
 
 The initial broad parser identified 328 potential entries; the lower count follows content classification rather than deleted source posts. Latin-script text still needs review because a parser cannot reliably distinguish every transliteration from prose. This source material is an unpublished import queue, not an approved public song catalogue or a license grant for the underlying compositions. Review lyrics, credits, categories, links, duplicate titles and distribution permission before publishing.
