@@ -4,8 +4,8 @@ go 1.25.5
 
 require (
 	github.com/jackc/pgx/v5 v5.7.6
-	golang.org/x/crypto v0.41.0
-	golang.org/x/net v0.43.0
+	golang.org/x/crypto v0.52.0
+	golang.org/x/net v0.54.0
 	golang.org/x/text v0.39.0
 )
 
