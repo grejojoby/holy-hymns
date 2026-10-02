@@ -1,6 +1,6 @@
 # Holy Hymns mobile app
 
-React Native and Expo SDK 57; one codebase for iPhone, iPadOS and Android phones/tablets. The optional web preview uses the same reader and admin UI. No hosted Expo services or paid Google sign-in packages are required.
+React Native and Expo SDK 57; one codebase for iPhone, iPadOS, Android phones/tablets and the lyrics website at [holyhymns.in](https://holyhymns.in). The website uses `https://backend.holyhymns.in/v1` for its API and shares the reader and admin UI. No hosted Expo services or paid Google sign-in packages are required.
 
 On wide windows the hymn library and reader appear side by side. Narrow windows,
 including iPad multitasking windows, use the phone navigation. The layout follows
@@ -27,7 +27,7 @@ Native identifiers default to `org.holyhymns.app`. Set `IOS_BUNDLE_ID` and `ANDR
 
 Run these commands from `mobile/` after `npm ci` and configuring `.env`. For the
 existing deployed catalogue use
-`EXPO_PUBLIC_API_URL=https://holyhymns-backend.grejo.in/v1`. The API URL is embedded
+`EXPO_PUBLIC_API_URL=https://backend.holyhymns.in/v1`. The API URL is embedded
 at build time: rebuild when changing it. For exports after changing environments,
 pass `--clear` to avoid retaining a previous Metro transform cache.
 
@@ -91,7 +91,7 @@ See [Expo local production builds](https://docs.expo.dev/guides/local-app-produc
 Sign in to your Apple Account in Xcode, connect and trust the iPhone, and enable Developer Mode on it. From `mobile/`, set the signing team shown by Xcode and the live API before generating and building the app:
 
 ```sh
-export EXPO_PUBLIC_API_URL=https://holyhymns-backend.grejo.in/v1
+export EXPO_PUBLIC_API_URL=https://backend.holyhymns.in/v1
 export IOS_APPLE_TEAM_ID=YOUR_TEAM_ID
 # Required for a free Personal Team; omit for a team with Apple Sign in enabled.
 export IOS_APPLE_SIGN_IN_ENABLED=false
@@ -104,6 +104,18 @@ Replace `YOUR_TEAM_ID` with your team identifier. Expo SDK 57 prebuild regenerat
 The Release app embeds its JavaScript and fonts, so it runs without Metro or the Mac after installation; catalogue access still needs internet. Free Personal Team provisioning expires after seven days, requiring a rebuild and reinstall. [Apple's Personal Team limits](https://developer.apple.com/help/account/basics/about-your-developer-account), [Expo local builds](https://docs.expo.dev/guides/local-app-development/).
 
 For Xcode 27 / iOS 27, the existing `expo-build-properties` configuration enables `ios.enableSceneSupport`. Expo SDK 57 requires this opt-in so the generated app uses its scene delegate; otherwise iOS 27 stops it at launch. Keep Expo at 57.0.23 or newer and regenerate native configuration after changing this setting. The native configuration test generates an isolated project from the installed template to verify scene startup, links, splash configuration, and Personal Team entitlements. [Expo's SDK 57 scene lifecycle guidance](https://github.com/expo/fyi/blob/main/ios-scene-lifecycle.md#staying-on-sdk-57-with-xcode-27).
+
+## Production website
+
+Build the static website on the workstation:
+
+```sh
+npm run export:web:production
+```
+
+This writes `dist/`, explicitly targets `https://backend.holyhymns.in/v1`, ignores local dotenv files and clears Metro's cached transforms so an older API address cannot remain embedded in the bundle. Only this exported directory is public; do not upload source files or environment files. The existing host Caddy serves it at `https://holyhymns.in`. See [the deployment record](../docs/oracle-vm.md#website-and-backend-domains--2-october-2026) for release paths and publishing/rollback instructions. The backend GitHub Actions workflow does not publish the website.
+
+The backend allows browser requests from `https://holyhymns.in`. Account emails continue to use the root domain's `/auth/*` pages, and Caddy forwards those pages and their verification API requests to the backend. Native apps can use the new API hostname; existing builds using the original hostname remain compatible.
 
 ## Provider configuration
 

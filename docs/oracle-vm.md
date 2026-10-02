@@ -1,11 +1,13 @@
 # Oracle VM deployment
 
-Deployed and verified on 19 September 2026.
+Initially deployed and verified on 19 September 2026. The public domain was updated and verified on 2 October 2026.
 
 | Setting | Active value |
 | --- | --- |
-| Public API | `https://holyhymns-backend.grejo.in/v1` |
-| Health endpoint | `https://holyhymns-backend.grejo.in/healthz` |
+| Lyrics website | `https://holyhymns.in` |
+| Public API | `https://backend.holyhymns.in/v1` |
+| Health endpoint | `https://backend.holyhymns.in/healthz` |
+| Legacy API alias | `https://holyhymns-backend.grejo.in/v1` |
 | VM | `ubuntu@140.238.160.97`, Ubuntu 22.04, ARM64 |
 | Application account | `holyhymns-deploy` (existing account, Docker group) |
 | Deployment directory | `/opt/holy-hymns` |
@@ -15,6 +17,7 @@ Deployed and verified on 19 September 2026.
 | Containers | `holy-hymns-api-1`, `holy-hymns-db-1` |
 | Database volume | `holy-hymns_postgres_data` |
 | Host Caddy site file | `/etc/caddy/hosts/holyhymns-backend.grejo.in` |
+| Website files | `/var/www/holy-hymns/current` → `releases/20261002-93e0ff754838` |
 
 The database password and 32-byte mail encryption key were generated on the VM and never copied into the repository or chat. `PUBLIC_URL` and `ALLOWED_ORIGIN` use the HTTPS hostname. `COMPOSE_PROFILES` is empty: the existing host Caddy handles HTTPS, and remote backups remain disabled.
 
@@ -50,6 +53,25 @@ curl --fail http://127.0.0.1:18080/healthz
 For a reviewed environment change, recreate only the API with `hh_compose up -d --no-deps --no-build --wait api`. Review database changes separately. Do not run a global Docker prune, restart Docker, or delete project volumes during an application deployment.
 
 For Caddy changes, preserve the import tree, validate the complete `/etc/caddy/Caddyfile`, and reload the service. Do not enable the Compose `edge` profile here: the existing Caddy owns ports 80/443.
+
+## Website and backend domains — 2 October 2026
+
+`holyhymns.in` serves the existing Expo lyrics app as static files. Its production JavaScript calls `https://backend.holyhymns.in/v1`; Caddy forwards that hostname to `127.0.0.1:18080`. Both Cloudflare A records point to `140.238.160.97`, with proxying enabled, TTL Auto and SSL/TLS mode Full (strict). The nameservers are `dean.ns.cloudflare.com` and `yolanda.ns.cloudflare.com`. Caddy manages both origin certificates and HTTP-to-HTTPS redirects. Cloudflare's Always Use HTTPS setting remains off; no `www` record was added.
+
+`PUBLIC_URL=https://holyhymns.in` intentionally remains the email-link origin, and `ALLOWED_ORIGIN=https://holyhymns.in` allows the website to call the backend subdomain. These are not the client's API base URL. Caddy preserves `/auth/*`, `/v1/*` and `/healthz` on the root domain for account landing pages and existing clients. The original `holyhymns-backend.grejo.in` API also remains available. Visiting `/auth/*` on either backend hostname redirects to the website's allowed browser origin. `DOMAIN=holyhymns.in` remains unused by the disabled Compose edge profile.
+
+The web export is at `/var/www/holy-hymns/releases/20261002-93e0ff754838`, with `current` pointing to it. Only exported assets are public; the application source and private VM environment are outside the web root. Hashed JavaScript/fonts use immutable caching, HTML uses `no-cache`, unknown app paths fall back to `index.html`, and missing static assets return 404. The website deployment does not rebuild or recreate backend containers.
+
+Verification passed for the production build and TypeScript check, public HTML/assets, backend HTTPS, website-origin CORS/preflight, SSE, protected admin endpoints and legacy URLs. A real browser loaded 288 hymns, searched the catalogue and opened lyrics; requests used the backend subdomain. A 390px-wide frame also rendered the catalogue and lyrics without horizontal overflow. This was a browser-width check, not a physical phone test. The Holy Hymns API/database containers and Caddy's process were preserved; only the Holy Hymns Caddy site file changed. This deployment performed no container start, stop or recreation operations.
+
+### Publish a new website release
+
+1. In `mobile/`, run `npm run typecheck` and `npm run export:web:production`. The production script fixes the backend URL, skips local dotenv files and clears Metro's transform cache. Confirm the exported JavaScript contains `https://backend.holyhymns.in/v1`.
+2. Transfer only `mobile/dist/` into a fresh `/var/www/holy-hymns/releases/<release>` directory on the VM, with directories mode `0755` and files mode `0644`. Confirm the `caddy` user can read `index.html` and its assets. Do not build on the VM or copy environment files into the web root.
+3. Retain the previous release and atomically replace the `current` symlink with one pointing to the new release. A static-file release needs no Caddy reload. For route changes, validate the complete `/etc/caddy/Caddyfile` before gracefully reloading it.
+4. Verify root HTML, exported assets, catalogue/search/lyrics in a real browser, backend requests with `Origin: https://holyhymns.in`, live events and account landing pages. The backend GitHub Actions workflow currently deploys only the backend; website publication is separate.
+
+To roll back a later web build, atomically point `current` to the retained previous release. The configuration before the website switch is saved at `/opt/holy-hymns/ops/website-activate-20261002T111434Z/holy-hymns.caddy`. Restoring that file, validating the complete Caddyfile and reloading Caddy returns the root to API-only service while preserving the new backend alias. The earlier `/opt/holy-hymns/ops/website-split-20261002T110939Z` backup also includes container state and Caddy file hashes. No database or image rollback is needed for this website change.
 
 ## Bootstrap and GitHub Actions
 
