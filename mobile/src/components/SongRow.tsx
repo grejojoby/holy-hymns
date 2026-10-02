@@ -8,11 +8,13 @@ import { Copy, useTheme } from "./ui";
 export function SongRow({
   song,
   saved,
+  selected = false,
   onPress,
 }: {
   song: Song;
   index?: number;
   saved?: boolean;
+  selected?: boolean;
   onPress: () => void;
 }) {
   const theme = useTheme();
@@ -28,6 +30,7 @@ export function SongRow({
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ selected }}
       accessibilityLabel={`${primary}${saved ? ", saved" : ""}`}
       onPress={onPress}
       style={({ pressed }) => ({
@@ -38,7 +41,7 @@ export function SongRow({
         paddingVertical: 10,
         borderBottomWidth: 1,
         borderColor: theme.line,
-        backgroundColor: pressed ? theme.tint : "transparent",
+        backgroundColor: pressed || selected ? theme.tint : "transparent",
       })}
     >
       <View style={{ flex: 1, gap: 3 }}>
@@ -68,6 +71,7 @@ export function SongRow({
           </Copy>
         )}
       </View>
+      {selected && <Ionicons name="checkmark" size={18} color={theme.accent} />}
       {saved && <Ionicons name="bookmark" size={18} color={theme.accent} />}
       <Ionicons name="chevron-forward" size={18} color={theme.muted} />
     </Pressable>

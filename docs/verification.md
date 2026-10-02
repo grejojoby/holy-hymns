@@ -94,3 +94,27 @@ pg_ctl -D /tmp/pgdata -m fast -w stop >/tmp/stop.log
 printf 'Encrypted PostgreSQL restore verified.\n'
 SH
 ```
+# Native delivery follow-up — 2 October 2026
+
+- `mobile`: TypeScript passes; all 21 tests pass. Isolated prebuild tests cover
+  iPhone/iPad device family, iPad rotations/multitasking, scene startup, deep links,
+  Personal Team entitlements, Android links/rotation/keyboard resizing and
+  SecureStore backup configuration.
+- Web and iOS/Android Hermes bundle exports succeed. These exports validate JS
+  and bundled assets; they do not produce an IPA or APK.
+- CocoaPods installation succeeds when run from `mobile/ios`.
+- Xcode 27 successfully compiled the universal iPhone/iPad **Release simulator**
+  target with signing disabled. Generated app:
+  `artifacts/ios-derived-data/Build/Products/Release-iphonesimulator/HolyHymns.app`;
+  build log: `artifacts/ios-build.log` (both ignored local outputs).
+- Browser verification with temporary local fixtures covered 320, 390, 768,
+  1024 and 1440 point widths; catalogue/reader navigation, search, saved hymns,
+  account page and tablet split view. Reader scroll offset remained 720 across
+  a 1024→390 resize; selecting another hymn reset it to zero. No browser console
+  errors occurred in the fixture session. This is web-renderer verification,
+  not native VoiceOver/TalkBack or physical-device verification.
+- The existing HTTPS API `/v1/config` responds from this machine outside the
+  execution sandbox. Production data was not modified.
+- Android SDK/emulator is not installed, so Gradle compilation/APK installation
+  remains unverified. Physical iPhone/iPad installation, store signing, provider
+  credentials and native accessibility checks remain external release gates.

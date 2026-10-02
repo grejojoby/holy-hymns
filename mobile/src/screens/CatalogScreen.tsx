@@ -74,8 +74,10 @@ const alphabets = {
 
 export function CatalogScreen({
   openSong,
+  selectedSong,
 }: {
   openSong: (id: string) => void;
+  selectedSong?: string | null;
 }) {
   const theme = useTheme();
   const { revision, favorites, track } = useApp();
@@ -478,6 +480,7 @@ export function CatalogScreen({
             <SongRow
               key={song.id}
               song={song}
+              selected={selectedSong === song.id}
               saved={favorites.includes(song.id)}
               onPress={() => openSong(song.id)}
             />

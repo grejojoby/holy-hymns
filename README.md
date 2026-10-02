@@ -1,6 +1,6 @@
 # Holy Hymns
 
-An online-first Malayalam Christian lyric library for iOS and Android, with a self-hosted Go/PostgreSQL backend and an in-app editorial workspace. Readers browse without an account; only authenticated admins see management controls. Published changes refresh connected apps through Server-Sent Events.
+An online-first Malayalam Christian lyric library for iPhone, iPadOS and Android, with a self-hosted Go/PostgreSQL backend and an in-app editorial workspace. Readers browse without an account; only authenticated admins see management controls. Published changes refresh connected apps through Server-Sent Events.
 
 The software uses open-source components and has no mandatory backend subscription. VM, domain, SMTP, object-storage usage and store memberships remain your responsibility; the application does not provision or purchase cloud resources. Google/Apple sign-in needs your developer configuration.
 
@@ -34,6 +34,10 @@ npm run ios
 ```
 
 Native social sign-in requires a development/native build. A browser preview is useful for visual review and email sign-in but does not substitute for device testing. See [deployment](docs/deployment.md) for production configuration and [App Review](docs/app-review.md) for release checks.
+
+See the [native build and local installation guide](mobile/README.md#build-and-install-locally)
+for iPhone/iPad simulators, connected devices, Android APKs and signing. The iOS
+app is universal; wide tablet windows show the catalogue beside the lyrics.
 
 ## CI/CD to the Oracle VM
 

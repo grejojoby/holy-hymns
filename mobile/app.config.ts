@@ -16,13 +16,16 @@ const config: ExpoConfig = {
   orientation: "default",
   userInterfaceStyle: "automatic",
   ios: {
+    buildNumber: "1",
     bundleIdentifier: process.env.IOS_BUNDLE_ID || "org.holyhymns.app",
     appleTeamId: process.env.IOS_APPLE_TEAM_ID || undefined,
     supportsTablet: true,
+    requireFullScreen: false,
     usesAppleSignIn: appleSignInEnabled,
     infoPlist: { ITSAppUsesNonExemptEncryption: false },
   },
   android: {
+    versionCode: 1,
     package: process.env.ANDROID_PACKAGE || "org.holyhymns.app",
     adaptiveIcon: {
       foregroundImage: "./assets/icon.png",
