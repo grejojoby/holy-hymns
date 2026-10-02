@@ -5,12 +5,12 @@ Extracted from the owner's [Grejo Lyrics](https://grejolyrics.blogspot.com/) pub
 | Contents | Count |
 | --- | ---: |
 | Candidate songs | 288 |
-| Malayalam text files | 46 |
-| Manglish text files | 279 |
-| Songs with both scripts | 37 |
+| Malayalam text files | 288 |
+| Manglish text files | 288 |
+| Songs with both scripts | 288 |
 | Posts excluded from automatic upload | 43 |
 
-Only scripts present in the source are included. No transliteration, translation, OCR or missing verses were generated. Latin text still needs editorial review to confirm spelling and remove any remaining prose. Chord markers were removed only where they could be identified without removing lyric words.
+Source posts originally contained 46 Malayalam and 279 Manglish lyric files (37 with both). Missing counterparts were filled with phonetic transliteration (`scripts/fill_missing_scripts.py`: Manglish→Malayalam via Google Input Tools, Malayalam→Manglish via [ml2en](https://github.com/knadh/ml2en)). Generated text is draft quality—review spelling and wording before publishing. Latin text also still needs editorial review to confirm spelling and remove any remaining prose. Chord markers were removed only where they could be identified without removing lyric words.
 
 ## Folder contents
 
@@ -74,7 +74,7 @@ Before the first upload, you may edit the lyric `.txt` files and the titles, cre
 
 Repeat uploads never overwrite an existing song, including app edits. The same source hash is counted as unchanged; changed local content is reported as a conflict. Correct an existing draft in **Account → Manage Holy Hymns**. Do not modify hashes to force an overwrite. Songs imported by the earlier Atom command are also recognized by source ID and preserved, even if a newer parser would extract them differently.
 
-After upload, review drafts, resolve duplicate-title warnings, check lyrics/credits/links, then publish approved songs from the admin screen. A missing language switch simply means that script was unavailable in the source.
+After upload, review drafts, resolve duplicate-title warnings, check lyrics/credits/links (especially generated counterparts), then publish approved songs from the admin screen.
 
 ## Repeat extraction
 
