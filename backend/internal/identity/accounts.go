@@ -36,12 +36,12 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 	}
 	hash, err := s.hashPassword(r.Context(), in.Password)
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	tx, err := s.db.Begin(r.Context())
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	defer tx.Rollback(r.Context())
@@ -53,7 +53,7 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 		var verified bool
 		err = tx.QueryRow(r.Context(), `SELECT id::text,verified FROM users WHERE email=$1 FOR UPDATE`, email).Scan(&id, &verified)
 		if err != nil {
-			internal(w, err)
+			internal(w, r, err)
 			return
 		}
 		if verified {
@@ -61,16 +61,16 @@ func (s *Service) register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	if err = s.queueAction(r.Context(), tx, id, email, "verify", 24*time.Hour); err != nil {
 		_ = tx.Rollback(r.Context())
-		s.mailError(w, err)
+		s.mailError(w, r, err)
 		return
 	}
 	if err = tx.Commit(r.Context()); err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	ok(w, registrationMessage)
@@ -96,7 +96,7 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 	u := &User{}
 	err = s.db.QueryRow(r.Context(), `SELECT `+userColumns+`,password_hash FROM users WHERE email=$1`, email).Scan(&u.ID, &u.Email, &u.Name, &u.Role, &u.Verified, &u.Suspended, &password)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	// Equalize expensive work for unknown accounts to reduce enumeration timing.
@@ -115,7 +115,7 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 	}
 	tx, err := s.db.Begin(r.Context())
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	defer tx.Rollback(r.Context())
@@ -134,7 +134,7 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		err = tx.Commit(r.Context())
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	writeJSON(w, 200, map[string]any{"token": token, "user": u})
@@ -153,7 +153,7 @@ func (s *Service) verify(w http.ResponseWriter, r *http.Request) {
 	}
 	tx, err := s.db.Begin(r.Context())
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	defer tx.Rollback(r.Context())
@@ -164,7 +164,7 @@ func (s *Service) verify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	_, err = tx.Exec(r.Context(), `UPDATE users SET verified=true WHERE id=$1`, id)
@@ -175,7 +175,7 @@ func (s *Service) verify(w http.ResponseWriter, r *http.Request) {
 		err = tx.Commit(r.Context())
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	ok(w, "Email verified. You can now sign in.")
@@ -204,7 +204,7 @@ func (s *Service) forgotPassword(w http.ResponseWriter, r *http.Request) {
 	}
 	tx, err := s.db.Begin(r.Context())
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	defer tx.Rollback(r.Context())
@@ -215,16 +215,16 @@ func (s *Service) forgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	if err = s.queueAction(r.Context(), tx, id, email, "reset", time.Hour); err != nil {
 		_ = tx.Rollback(r.Context())
-		s.mailError(w, err)
+		s.mailError(w, r, err)
 		return
 	}
 	if err = tx.Commit(r.Context()); err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	ok(w, "If this account exists, a password reset email will be sent.")
@@ -250,7 +250,7 @@ func (s *Service) resetPassword(w http.ResponseWriter, r *http.Request) {
 	var exists bool
 	err := s.db.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM auth_tokens WHERE token_hash=$1 AND purpose='reset' AND expires_at>now())`, tokenHash(in.Token)).Scan(&exists)
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	if !exists {
@@ -259,12 +259,12 @@ func (s *Service) resetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 	hash, err := s.hashPassword(r.Context(), in.Password)
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	tx, err := s.db.Begin(r.Context())
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	defer tx.Rollback(r.Context())
@@ -275,7 +275,7 @@ func (s *Service) resetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	_, err = tx.Exec(r.Context(), `UPDATE users SET password_hash=$2,verified=true WHERE id=$1 AND NOT suspended`, id, hash)
@@ -292,7 +292,7 @@ func (s *Service) resetPassword(w http.ResponseWriter, r *http.Request) {
 		err = tx.Commit(r.Context())
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	ok(w, "Password reset. Sign in with your new password.")
@@ -300,7 +300,7 @@ func (s *Service) resetPassword(w http.ResponseWriter, r *http.Request) {
 func (s *Service) logout(w http.ResponseWriter, r *http.Request) {
 	_, err := s.db.Exec(r.Context(), `DELETE FROM auth_sessions WHERE token_hash=$1`, r.Context().Value(sessionKey{}))
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	ok(w, "Signed out.")
@@ -308,7 +308,7 @@ func (s *Service) logout(w http.ResponseWriter, r *http.Request) {
 func (s *Service) logoutAll(w http.ResponseWriter, r *http.Request) {
 	_, err := s.db.Exec(r.Context(), `DELETE FROM auth_sessions WHERE user_id=$1`, Current(r).ID)
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	ok(w, "Signed out on all devices.")
@@ -340,23 +340,23 @@ func (s *Service) deleteAccount(w http.ResponseWriter, r *http.Request) {
 	}
 	tx, err := s.db.Begin(r.Context())
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	defer tx.Rollback(r.Context())
 	if _, err = tx.Exec(r.Context(), `SELECT pg_advisory_xact_lock(802011)`); err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	var owners int
 	err = tx.QueryRow(r.Context(), `SELECT count(*) FROM users WHERE role='owner' AND verified AND NOT suspended`).Scan(&owners)
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	var currentRole string
 	if err = tx.QueryRow(r.Context(), `SELECT role FROM users WHERE id=$1 FOR UPDATE`, u.ID).Scan(&currentRole); err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	if currentRole == "owner" && owners <= 1 {
@@ -369,7 +369,7 @@ func (s *Service) deleteAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err = audit(r.Context(), tx, u.ID, u.ID, "account_deleted"); err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	_, err = tx.Exec(r.Context(), `DELETE FROM mail_outbox WHERE recipient=$1`, u.Email)
@@ -387,7 +387,7 @@ func (s *Service) deleteAccount(w http.ResponseWriter, r *http.Request) {
 		err = tx.Commit(r.Context())
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	if manualAppleRevocation {

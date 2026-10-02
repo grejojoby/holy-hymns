@@ -241,7 +241,7 @@ func (s *Server) importLyrics(w http.ResponseWriter, r *http.Request) {
 	}
 	report, err := importEntries(r.Context(), s.DB, []importer.Entry{entry}, body.DryRun, func(tx pgx.Tx) error { return audit(r.Context(), tx, r, "lyrics.import", entry.SourceID) })
 	if err != nil {
-		dbError(w, err)
+		dbError(w, r, err)
 		return
 	}
 	write(w, 200, report)

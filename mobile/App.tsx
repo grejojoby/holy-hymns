@@ -25,6 +25,7 @@ import {
 } from "./src/screens/AccountScreen";
 import { SongScreen } from "./src/screens/SongScreen";
 import { AdminScreen } from "./src/screens/AdminScreen";
+import { Sentry } from "./src/lib/telemetry";
 
 type Tab = "collection" | "saved" | "account";
 function Shell() {
@@ -217,7 +218,7 @@ function Shell() {
     </SafeAreaView>
   );
 }
-export default function App() {
+function App() {
   const [loaded, error] = useFonts({
     Malayalam: NotoSansMalayalam_400Regular,
   });
@@ -241,3 +242,19 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+
+export default Sentry.wrap(function Root() {
+  return (
+    <Sentry.ErrorBoundary
+      fallback={
+        <View style={{ flex: 1, justifyContent: "center", padding: 24 }}>
+          <Text>
+            Holy Hymns encountered an error. Please close and reopen the app.
+          </Text>
+        </View>
+      }
+    >
+      <App />
+    </Sentry.ErrorBoundary>
+  );
+});

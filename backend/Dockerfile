@@ -2,11 +2,12 @@
 FROM --platform=$BUILDPLATFORM golang:1.25.5-alpine AS build
 ARG TARGETOS=linux
 ARG TARGETARCH
+ARG SENTRY_RELEASE
 WORKDIR /src
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 COPY backend/ ./
-RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags='-s -w' -o /out/holyhymns ./cmd/holyhymns
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w -X holyhymns/internal/telemetry.release=$SENTRY_RELEASE" -o /out/holyhymns ./cmd/holyhymns
 
 FROM alpine:3.22
 RUN apk add --no-cache ca-certificates tzdata && addgroup -g 10001 app && adduser -D -u 10001 -G app app

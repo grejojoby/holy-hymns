@@ -21,7 +21,7 @@ func (s *Service) users(w http.ResponseWriter, r *http.Request) {
 	}
 	rows, err := s.db.Query(r.Context(), `SELECT `+userColumns+` FROM users ORDER BY created_at DESC,id LIMIT $1 OFFSET $2`, limit, offset)
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	defer rows.Close()
@@ -29,18 +29,18 @@ func (s *Service) users(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		u, err := scanUser(rows)
 		if err != nil {
-			internal(w, err)
+			internal(w, r, err)
 			return
 		}
 		items = append(items, *u)
 	}
 	if err = rows.Err(); err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	var total int
 	if err = s.db.QueryRow(r.Context(), `SELECT count(*) FROM users`).Scan(&total); err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	writeJSON(w, 200, map[string]any{"items": items, "total": total})
@@ -69,12 +69,12 @@ func (s *Service) updateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	tx, err := s.db.Begin(r.Context())
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	defer tx.Rollback(r.Context())
 	if _, err = tx.Exec(r.Context(), `SELECT pg_advisory_xact_lock(802011)`); err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	target, err := scanUser(tx.QueryRow(r.Context(), `SELECT `+userColumns+` FROM users WHERE id::text=$1 FOR UPDATE`, r.PathValue("id")))
@@ -83,7 +83,7 @@ func (s *Service) updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	if actor.Role != "owner" && target.Role != "reader" {
@@ -105,7 +105,7 @@ func (s *Service) updateUser(w http.ResponseWriter, r *http.Request) {
 	if target.Role == "owner" && (newRole != "owner" || suspended) {
 		var n int
 		if err = tx.QueryRow(r.Context(), `SELECT count(*) FROM users WHERE role='owner' AND verified AND NOT suspended`).Scan(&n); err != nil {
-			internal(w, err)
+			internal(w, r, err)
 			return
 		}
 		if n <= 1 {
@@ -124,7 +124,7 @@ func (s *Service) updateUser(w http.ResponseWriter, r *http.Request) {
 		err = tx.Commit(r.Context())
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	target.Role = newRole
@@ -149,7 +149,7 @@ func (s *Service) invite(w http.ResponseWriter, r *http.Request) {
 	}
 	tx, err := s.db.Begin(r.Context())
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	defer tx.Rollback(r.Context())
@@ -158,7 +158,7 @@ func (s *Service) invite(w http.ResponseWriter, r *http.Request) {
 	var suspended bool
 	err = tx.QueryRow(r.Context(), `SELECT id::text,role,suspended FROM users WHERE email=$1 FOR UPDATE`, email).Scan(&id, &role, &suspended)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	if suspended || role == "admin" || role == "owner" {
@@ -167,14 +167,14 @@ func (s *Service) invite(w http.ResponseWriter, r *http.Request) {
 	}
 	if err = s.queueAction(r.Context(), tx, id, email, "invite", 48*time.Hour); err != nil {
 		_ = tx.Rollback(r.Context())
-		s.mailError(w, err)
+		s.mailError(w, r, err)
 		return
 	}
 	if err = audit(r.Context(), tx, Current(r).ID, id, "admin_invited"); err == nil {
 		err = tx.Commit(r.Context())
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	ok(w, "An administrator invitation has been queued.")
@@ -213,12 +213,12 @@ func (s *Service) acceptInvitation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	var exists bool
 	if err = s.db.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM users WHERE email=$1)`, email).Scan(&exists); err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	var hash string
@@ -236,12 +236,12 @@ func (s *Service) acceptInvitation(w http.ResponseWriter, r *http.Request) {
 	}
 	tx, err := s.db.Begin(r.Context())
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	defer tx.Rollback(r.Context())
 	if _, err = tx.Exec(r.Context(), `SELECT pg_advisory_xact_lock(802011)`); err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	err = tx.QueryRow(r.Context(), `DELETE FROM auth_tokens WHERE token_hash=$1 AND purpose='invite' AND expires_at>now() RETURNING email`, tokenHash(in.Token)).Scan(&email)
@@ -250,7 +250,7 @@ func (s *Service) acceptInvitation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	var id string
@@ -268,7 +268,7 @@ func (s *Service) acceptInvitation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	if _, err = tx.Exec(r.Context(), `DELETE FROM auth_sessions WHERE user_id=$1`, id); err == nil {
@@ -278,7 +278,7 @@ func (s *Service) acceptInvitation(w http.ResponseWriter, r *http.Request) {
 		err = tx.Commit(r.Context())
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	ok(w, "Invitation accepted. Sign in to manage Holy Hymns.")

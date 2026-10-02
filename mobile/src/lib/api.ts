@@ -1,4 +1,5 @@
 import { fetch } from "expo/fetch";
+import { reportApiFailure } from "./telemetry";
 
 export const API_URL = (
   process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080/v1"
@@ -51,6 +52,9 @@ export async function api<T = void>(
         options.body === undefined ? undefined : JSON.stringify(options.body),
       signal: controller.signal,
     });
+    if (response.status >= 500) {
+      reportApiFailure(response.status, response.headers.get("X-Request-ID"));
+    }
     const text = await response.text();
     let data: any;
     try {

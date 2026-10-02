@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net"
 	"net/http"
 	"net/smtp"
@@ -21,6 +20,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"holyhymns/internal/telemetry"
 )
 
 var errMailQuota = errors.New("email sending quota reached")
@@ -66,14 +66,14 @@ func (s *Service) mailReady(w http.ResponseWriter) bool {
 	}
 	return true
 }
-func (s *Service) mailError(w http.ResponseWriter, err error) {
+func (s *Service) mailError(w http.ResponseWriter, r *http.Request, err error) {
 	if errors.Is(err, errMailQuota) {
 		s.recordMailAlert(context.Background(), "quota", "Email quota or recipient limit reached. Review SMTP limits before retrying.")
 		w.Header().Set("Retry-After", "3600")
 		writeError(w, 429, "email_quota", "Email sending limit reached. Please retry later or contact the owner.")
 		return
 	}
-	internal(w, err)
+	internal(w, r, err)
 }
 func (s *Service) encryptMail(recipient string, p mailPayload) ([]byte, error) {
 	aead, err := s.mailCipher()
@@ -173,7 +173,7 @@ func (s *Service) recordMailAlert(ctx context.Context, kind, message string) {
 	defer cancel()
 	_, err := s.db.Exec(ctx, `INSERT INTO mail_alerts(kind,message) VALUES($1,$2) ON CONFLICT(kind) DO UPDATE SET message=excluded.message,occurrences=mail_alerts.occurrences+1,last_seen_at=now()`, kind, message)
 	if err != nil {
-		slog.Error("mail alert could not be recorded", "kind", kind)
+		telemetry.Error(ctx, "mail alert could not be recorded", err)
 	}
 }
 func (s *Service) MailAlerts(ctx context.Context) ([]MailAlert, error) {
@@ -205,7 +205,7 @@ func (s *Service) RunMailer(ctx context.Context) {
 		case <-ticker.C:
 			if s.mailConfigured() {
 				if err := s.deliverOne(ctx); err != nil && !errors.Is(err, pgx.ErrNoRows) {
-					slog.Error("mail worker operation failed", "error", err)
+					telemetry.Error(telemetry.Entry(ctx, "mailer"), "mail worker operation failed", err)
 				}
 			}
 		case <-cleanup.C:
@@ -216,7 +216,7 @@ func (s *Service) RunMailer(ctx context.Context) {
 func (s *Service) cleanup(ctx context.Context) {
 	for _, q := range []string{`DELETE FROM auth_sessions WHERE expires_at<now()`, `DELETE FROM auth_tokens WHERE expires_at<now()`, `DELETE FROM auth_challenges WHERE expires_at<now()`, `DELETE FROM auth_rate_limits WHERE reset_at<now()-interval '1 day'`, `DELETE FROM mail_usage WHERE created_at<now()-interval '35 days'`, `UPDATE mail_outbox SET status='failed',encrypted_body=''::bytea WHERE status='pending' AND expires_at<=now()`, `DELETE FROM mail_outbox WHERE created_at<now()-interval '7 days'`, `DELETE FROM security_audit WHERE created_at<now()-interval '90 days'`} {
 		if _, err := s.db.Exec(ctx, q); err != nil {
-			slog.Error("identity retention cleanup failed", "error", err)
+			telemetry.Error(telemetry.Entry(ctx, "identity_retention"), "identity retention cleanup failed", err)
 		}
 	}
 }

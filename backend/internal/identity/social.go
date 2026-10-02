@@ -38,7 +38,7 @@ func (s *Service) providers(w http.ResponseWriter, r *http.Request) {
 func (s *Service) challenge(w http.ResponseWriter, r *http.Request) {
 	nonce, err := randomToken()
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	userID := ""
@@ -47,7 +47,7 @@ func (s *Service) challenge(w http.ResponseWriter, r *http.Request) {
 	}
 	_, err = s.db.Exec(r.Context(), `INSERT INTO auth_challenges(nonce_hash,user_id,expires_at) VALUES($1,nullif($2,'')::uuid,now()+interval '5 minutes')`, tokenHash(nonce), userID)
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	writeJSON(w, 200, map[string]string{"nonce": nonce})
@@ -141,7 +141,7 @@ func (s *Service) social(w http.ResponseWriter, r *http.Request) {
 	provider := r.PathValue("provider")
 	tx, err := s.db.Begin(r.Context())
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	defer tx.Rollback(r.Context())
@@ -163,7 +163,7 @@ func (s *Service) social(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err != nil {
-			internal(w, err)
+			internal(w, r, err)
 			return
 		}
 		_, err = tx.Exec(r.Context(), `INSERT INTO provider_identities(provider,subject,user_id) VALUES($1,$2,$3)`, provider, claims.Subject, u.ID)
@@ -173,7 +173,7 @@ func (s *Service) social(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	if u.Suspended || !u.Verified {
@@ -194,7 +194,7 @@ func (s *Service) social(w http.ResponseWriter, r *http.Request) {
 		err = tx.Commit(r.Context())
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	writeJSON(w, 200, map[string]any{"token": token, "user": u})
@@ -213,7 +213,7 @@ func (s *Service) link(w http.ResponseWriter, r *http.Request) {
 	}
 	tx, err := s.db.Begin(r.Context())
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	defer tx.Rollback(r.Context())
@@ -233,7 +233,7 @@ func (s *Service) link(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	if r.PathValue("provider") == "apple" {
@@ -246,7 +246,7 @@ func (s *Service) link(w http.ResponseWriter, r *http.Request) {
 		err = tx.Commit(r.Context())
 	}
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return
 	}
 	ok(w, "Login method linked.")
