@@ -1,6 +1,6 @@
 # VM deployment and operations
 
-The current live VM, service paths and verification results are recorded in [oracle-vm.md](oracle-vm.md).
+The current live VM, service paths and verification results are recorded in [oracle-vm.md](oracle-vm.md). The [public website guide](website.md) covers the server-rendered landing page, crawlable lyrics, sitemap and the existing Expo app at `/app/`.
 
 For automatic ARM64/AMD64 image builds and Compose deployment from GitHub Actions, follow [CI/CD setup](ci-cd.md). The workstation build below remains available for manual deployment. With CI/CD, Compose files are versioned under `releases/` and `current` points at the successful release; use the operations commands in that guide to include the correct image digests and VM environment.
 

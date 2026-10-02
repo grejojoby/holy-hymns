@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f4ec">
+  <title>{{.Title}}</title>
+  <meta name="description" content="{{.Description}}">
+  <meta name="robots" content="{{.Robots}}">
+  {{if .Canonical}}<link rel="canonical" href="{{.Canonical}}">{{end}}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Holy Hymns">
+  <meta property="og:title" content="{{.Title}}">
+  <meta property="og:description" content="{{.Description}}">
+  {{if .Canonical}}<meta property="og:url" content="{{.Canonical}}">{{end}}
+  <meta property="og:image" content="https://holyhymns.in{{asset "share.jpg"}}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="800">
+  <meta property="og:image:alt" content="An open hymnbook and an olive branch in morning light">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{.Title}}">
+  <meta name="twitter:description" content="{{.Description}}">
+  <meta name="twitter:image" content="https://holyhymns.in{{asset "share.jpg"}}">
+  <link rel="icon" href="{{asset "favicon.svg"}}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{asset "styles.css"}}">
+  {{if .Previous}}<link rel="prev" href="https://holyhymns.in{{.Previous}}">{{end}}
+  {{if .Next}}<link rel="next" href="https://holyhymns.in{{.Next}}">{{end}}
+  {{if .Schema}}<script type="application/ld+json">{{.Schema}}</script>{{end}}
+  {{if eq .Kind "song"}}<script src="{{asset "reader.js"}}" defer></script>{{end}}
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header wrap">
+    <a class="wordmark" href="/" aria-label="Holy Hymns home"><svg width="34" height="38" viewBox="0 0 34 38" fill="none" aria-hidden="true"><path d="M17 8v13M12 13h10M17 34c-4-4-9-6-15-5V9c6-1 11 1 15 5 4-4 9-6 15-5v20c-6-1-11 1-15 5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Holy Hymns<small>WORDS OF FAITH. SONGS OF HOPE.</small></span></a>
+    <nav aria-label="Main navigation"><a href="/lyrics" {{if eq .Kind "catalog"}}aria-current="page"{{end}}>Lyrics</a><a class="about-nav" href="/#about">Our purpose</a><a class="nav-account" href="/app/">My collection <span aria-hidden="true">↗</span></a></nav>
+  </header>
+  <main id="main">
+  {{if eq .Kind "home"}}
+    <section class="hero wrap" aria-labelledby="hero-title">
+      <div class="hero-copy"><p class="eyebrow"><span class="small-cross" aria-hidden="true">✦</span> A HOME FOR MALAYALAM CHRISTIAN HYMNS</p><h1 id="hero-title">Let your heart<br> find its <em>song.</em></h1><p class="hero-description">The words you grew up with.<br>The hymns that bring you home.</p><p class="hero-detail">Discover Christian song lyrics in Malayalam and Manglish, for everyday prayer and moments of worship.</p><div class="hero-actions"><a class="button" href="#lyrics">Browse lyrics <span aria-hidden="true">↗</span></a><a class="text-link" href="#about">A little about us <span aria-hidden="true">↘</span></a></div><div class="hero-note"><span class="note-line" aria-hidden="true"></span>{{.Total}} hymns to return to<span aria-hidden="true"> · </span>Two ways to read</div></div>
+      <figure class="hero-figure"><img src="{{asset "hero.webp"}}" width="1200" height="800" alt="An open hymnbook with an olive branch, resting in the morning light of a church window" fetchpriority="high"><figcaption><span>A MOMENT OF STILLNESS</span><span aria-hidden="true">01 — ∞</span></figcaption><div class="image-label" aria-hidden="true"><span>Faith, in every word.</span><small>HOLY HYMNS</small></div></figure>
+    </section>
+    <div class="promise-strip wrap"><p><span aria-hidden="true">01</span> Malayalam &amp; Manglish</p><p><span aria-hidden="true">02</span> Familiar words. Lasting meaning.</p><p><span aria-hidden="true">03</span> A quiet space to sing</p></div>
+    <section id="lyrics" class="library-section wrap" aria-labelledby="library-title">
+      <div class="section-heading"><div><p class="eyebrow">THE HYMN COLLECTION</p><h2 id="library-title">A song for this moment.</h2></div><a class="text-link" href="/lyrics">View all {{.Total}} hymns <span aria-hidden="true">↗</span></a></div>
+      {{template "search" .}}
+      {{template "songs" .}}
+      <div class="library-bottom"><p>Looking for a familiar line? Search in either script.</p><a class="button button-outline" href="/lyrics">Explore all lyrics <span aria-hidden="true">→</span></a></div>
+    </section>
+    <section id="about" class="about-section"><div class="wrap about-grid"><div><p class="eyebrow">WHY HOLY HYMNS EXISTS</p><h2>Some songs stay<br> with us <em>forever.</em></h2></div><div class="about-copy"><p>A melody from Sunday worship. A chorus sung at home. A quiet prayer when words are hard to find.</p><p>Holy Hymns brings Malayalam Christian lyrics together in one welcoming place. Read in Malayalam, follow along in Manglish, and return to the songs that mean something to you.</p><a class="text-link" href="/lyrics">Find your next hymn <span aria-hidden="true">↗</span></a></div></div></section>
+    <section class="faq-section wrap" aria-labelledby="faq-title"><div><p class="eyebrow">A FEW HELPFUL NOTES</p><h2 id="faq-title">Make yourself<br> at home.</h2></div><div class="faq-list"><details><summary>Can I read the lyrics in Manglish?</summary><p>Yes. Hymns with a Manglish version let you follow Malayalam words in the Latin alphabet. Switch between the available scripts on a hymn’s page.</p></details><details><summary>How do I find a song I remember?</summary><p>Search the collection using a title or a line from the lyrics. You can search in Malayalam or Manglish, then open a hymn to read the full lyrics.</p></details><details><summary>Do I need an account to read lyrics?</summary><p>No account is needed to browse or read. Open <a href="/app/">My collection</a> to sign in and keep your saved hymns together.</p></details></div></section>
+  {{else if eq .Kind "catalog"}}
+    <section class="catalog wrap" aria-labelledby="catalog-title"><a class="breadcrumb" href="/">Home <span aria-hidden="true">/</span></a><p class="eyebrow">THE HYMN COLLECTION</p><h1 id="catalog-title">Words to <em>sing by.</em></h1><p class="intro">Malayalam Christian song lyrics, always close at hand.</p>{{template "search" .}}<div class="results-heading"><h2>{{if .Query}}Results for “{{.Query}}”{{else}}All hymns{{end}}</h2><span>{{.Total}} {{if eq .Total 1}}hymn{{else}}hymns{{end}}{{if gt .Page 1}} · Page {{.Page}}{{end}}</span></div>{{template "songs" .}}<nav class="pagination" aria-label="Lyrics pages">{{if .Previous}}<a class="button button-outline" href="{{.Previous}}">← Previous</a>{{end}}<span>Page {{.Page}}</span>{{if .Next}}<a class="button button-outline" href="{{.Next}}">Next →</a>{{end}}</nav></section>
+  {{else if eq .Kind "song"}}
+    <article class="song-page wrap"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/lyrics">Lyrics</a><span aria-hidden="true">/</span><span aria-current="page">{{songTitle .Song}}</span></nav><header class="song-heading"><p class="eyebrow">MALAYALAM CHRISTIAN HYMN</p><h1>{{songTitle .Song}}</h1>{{if .Song.TitleMalayalam}}<p class="malayalam-title" lang="ml">{{.Song.TitleMalayalam}}</p>{{end}}<p class="song-subtitle">Take a moment. Let the words lead.</p></header><div class="reader-toolbar" hidden><div class="script-tabs" role="tablist" aria-label="Lyrics script">{{if .Song.LyricsMalayalam}}<button id="tab-malayalam" type="button" role="tab" aria-controls="lyrics-malayalam" aria-selected="true" data-script="lyrics-malayalam">Malayalam</button>{{end}}{{if .Song.LyricsManglish}}<button id="tab-manglish" type="button" role="tab" aria-controls="lyrics-manglish" aria-selected="false" data-script="lyrics-manglish">Manglish</button>{{end}}</div><div class="text-controls"><span>Text size</span><button type="button" data-size="-1" aria-label="Decrease lyric text size">A−</button><button type="button" data-size="1" aria-label="Increase lyric text size">A+</button></div></div><div class="lyrics-paper">{{if .Song.LyricsMalayalam}}<section id="lyrics-malayalam" class="lyrics-block" lang="ml"><h2 lang="en">Malayalam lyrics</h2><div class="lyric-text">{{.Song.LyricsMalayalam}}</div></section>{{end}}{{if .Song.LyricsManglish}}<section id="lyrics-manglish" class="lyrics-block" lang="ml-Latn"><h2 lang="en">Manglish lyrics</h2><div class="lyric-text">{{.Song.LyricsManglish}}</div></section>{{end}}<span class="end-mark" aria-hidden="true">✦</span></div>{{if .Song.Credits}}<section class="song-credits"><h2>Credits</h2><p>{{.Song.Credits}}</p></section>{{end}}{{if .Song.Links}}<section class="song-links"><h2>Listen &amp; explore</h2>{{range .Song.Links}}<a class="text-link" href="{{.URL}}" rel="noopener noreferrer">{{.Label}} <span aria-hidden="true">↗</span></a>{{end}}</section>{{end}}<div class="song-bottom"><a class="text-link" href="/lyrics">← Back to all lyrics</a><button class="text-link copy-link" type="button" hidden>Copy hymn link ↗</button><span class="copy-status" role="status"></span></div></article>
+  {{else}}
+    <section class="error-page wrap"><p class="eyebrow">HOLY HYMNS</p><h1>{{if eq .Kind "notfound"}}A little <em>off-key.</em>{{else}}A brief <em>pause.</em>{{end}}</h1><p>{{.Description}}</p><a class="button" href="/lyrics">Browse lyrics →</a></section>
+  {{end}}
+  </main>
+  <footer class="site-footer wrap"><div><a class="footer-name" href="/">Holy Hymns</a><p>Familiar hymns. A little closer.</p></div><nav aria-label="Footer navigation"><a href="/lyrics">Browse lyrics</a><a href="/app/">My collection</a><a href="/#about">Our purpose</a></nav><p class="footer-note">Made for moments of faith.<br><span>Lyrics belong to their respective authors.</span></p></footer>
+</body></html>
+
+{{define "search"}}<form class="search-form" role="search" action="/lyrics" method="get"><label for="lyric-search" class="sr-only">Search by song title or lyrics in Malayalam or Manglish</label><svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.6"/><path d="m16 16 5 5" stroke="currentColor" stroke-width="1.6"/></svg><input id="lyric-search" type="search" name="q" value="{{.Query}}" placeholder="A song title, a line, a memory…" maxlength="500"><button type="submit">Find a hymn <span aria-hidden="true">→</span></button></form>{{end}}
+{{define "songs"}}<div class="song-grid">{{range $i, $song := .Songs}}<a class="song-card" href="{{songPath $song}}"><span class="song-number">{{number $i}}</span><div><h3>{{songTitle $song}}</h3>{{if $song.TitleMalayalam}}<p class="card-malayalam" lang="ml">{{$song.TitleMalayalam}}</p>{{end}}<p class="song-excerpt" {{if not $song.LyricsManglish}}lang="ml"{{end}}>{{excerpt $song}}</p><span class="song-language">{{if $song.LyricsMalayalam}}MALAYALAM{{end}}{{if and $song.LyricsMalayalam $song.LyricsManglish}} <span aria-hidden="true">/</span> {{end}}{{if $song.LyricsManglish}}MANGLISH{{end}}</span></div><span class="song-arrow" aria-hidden="true">↗</span></a>{{else}}<div class="empty-state"><h3>No hymns found yet.</h3><p>Try a shorter title or a different line from the song.</p><a class="text-link" href="/lyrics">Browse all lyrics →</a></div>{{end}}</div>{{end}}

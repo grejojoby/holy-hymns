@@ -36,6 +36,7 @@ func New(db *pgxpool.Pool, auth *identity.Service, origin string) *Server {
 }
 func (s *Server) Handler() http.Handler {
 	m := http.NewServeMux()
+	s.registerWebsite(m)
 	s.Auth.Register(m)
 	m.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
