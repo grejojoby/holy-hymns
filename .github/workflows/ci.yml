@@ -53,7 +53,7 @@ jobs:
       - run: npm test
       - run: npm run export:web
       - run: npm run export:native
-      - run: npm audit --omit=dev --audit-level=high
+      - run: npm run audit:security
 
   tooling:
     name: Tooling

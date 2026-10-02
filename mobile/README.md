@@ -145,7 +145,12 @@ npm test
 npx expo install --check
 npm run export:web
 npm run export:native
+npm run audit:security
 ```
+
+The audit command verifies a temporary security backport for Expo's transitive
+`node-forge` dependency before accepting its one known advisory. All other
+high/critical findings still block CI. See [the mitigation and review deadline](../docs/mobile-security.md).
 
 Before release: test VoiceOver/TalkBack, Malayalam shaping on a real iPhone and Android, deep links from actual email, provider login/linking/deletion, offline failures, publication across two devices, reconnect and background resume. Test the production API origin with HTTPS and the final app signing credentials. The original hymnbook/cross icon and splash mark are bundled in `assets/`, along with font license notices. Supply real screenshots, a hosted privacy policy, a review account and store metadata before submitting. App-store memberships are separate platform costs.
 

@@ -46,7 +46,17 @@ JavaScript reports remove requests, user data, extra fields, breadcrumbs and fra
 
 ## Verification and troubleshooting
 
-The backend is live as of 2 October 2026. An on-VM probe was received as event `f3b52a30bd7243e581f8fa7ea65d3c1b`, release `holy-hymns-backend@e62daed`, environment `verification`; see the [deployment record and rollback instructions](oracle-vm.md#sentry-backend-deployment--2-october-2026). Both projects have verified IP scrubbing. Mobile integration and source-map uploads are ready, but no mobile or website release was deployed. Mobile event receipt and native crash symbolication still require a release-build test. The mobile release remains blocked by the existing unpatched `node-forge` advisory [GHSA-86w9-cpqp-85rv](https://github.com/advisories/GHSA-86w9-cpqp-85rv); the dependency audit gate is unchanged.
+The backend is live as of 2 October 2026. An on-VM probe was received as event `f3b52a30bd7243e581f8fa7ea65d3c1b`, release `holy-hymns-backend@e62daed`, environment `verification`; see the [deployment record and rollback instructions](oracle-vm.md#sentry-backend-deployment--2-october-2026). Both projects have verified IP scrubbing. The Expo dependency audit blocker now has a [tested local mitigation](mobile-security.md), with a narrowly scoped, expiring audit exception that requires the patched source. No mobile or website release was distributed.
+
+On 2 October 2026, an isolated iPhone 17 Pro simulator running iOS 26.5 completed a Release-build test without an attached debugger. The temporary app used bundle ID `org.holyhymns.sentryverification`, release `holy-hymns-mobile@028a615-verification`, and environment `verification`. A temporary alternate JavaScript entry reported one labeled exception and called `Sentry.nativeCrash()` once, using a persisted marker to prevent a crash loop. The normal app entry has no crash trigger. The build uploaded matching Hermes source maps and 30 native debug files; restarting the app sent the saved native crash.
+
+| Check | Received evidence |
+| --- | --- |
+| JavaScript error | [Issue 7768052829](https://grejo.sentry.io/issues/7768052829/), event `3e6ce05421bb4db0bd34d1e764a9e7f3`; `verifySentryMobileRelease` resolves to the original TypeScript entry, line 12 |
+| Native crash | [Issue 7768054882](https://grejo.sentry.io/issues/7768054882/), event `9b6a2ea9c6454224a825c76399ab3f27`; fatal `EXC_BAD_ACCESS`, `+[SentrySDKInternal crash]` symbol present, no symbolication errors |
+| Privacy | Neither received event contains a user IP address |
+
+The JavaScript test's application frames resolve correctly, but five runtime/helper frames still report `js_invalid_sourcemap_location`; complete mapping of those frames is not verified. This was a simulator build, not a store-signed or physical-device test. Android runtime crash delivery and signed-device verification remain release checks; Android export and native configuration tests pass.
 
 The CLI-only probe sends a labeled synthetic event without affecting HTTP routes:
 
