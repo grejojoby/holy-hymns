@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"holyhymns/internal/identity"
+	"holyhymns/internal/telemetry"
 )
 
 type Server struct {
@@ -70,6 +70,7 @@ func (s *Server) Handler() http.Handler {
 	m.HandleFunc("POST /v1/analytics", s.Auth.Optional(s.track))
 	m.HandleFunc("GET /v1/admin/analytics", s.Auth.Require("admin", s.analytics))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r = telemetry.Request(w, r)
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("Referrer-Policy", "no-referrer")
@@ -78,6 +79,7 @@ func (s *Server) Handler() http.Handler {
 				fail(w, 403, "origin not allowed")
 				return
 			}
+			w.Header().Set("Access-Control-Expose-Headers", "X-Request-ID")
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Vary", "Origin")
 			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, Last-Event-ID")
@@ -98,12 +100,12 @@ func (s *Server) Handler() http.Handler {
 			}
 			ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 			defer cancel()
-			r = r.WithContext(ctx)
+			*r = *r.WithContext(ctx)
 		}
 		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 		defer func() {
 			if v := recover(); v != nil {
-				slog.Error("request panic", "path", r.URL.Path, "error", v)
+				telemetry.Panic(r.Context(), v)
 				fail(w, 500, "unexpected server error")
 			}
 		}()
@@ -128,7 +130,7 @@ func read(w http.ResponseWriter, r *http.Request, dest any) bool {
 	}
 	return true
 }
-func dbError(w http.ResponseWriter, err error) {
+func dbError(w http.ResponseWriter, r *http.Request, err error) {
 	if errors.Is(err, context.Canceled) {
 		return
 	}
@@ -140,7 +142,7 @@ func dbError(w http.ResponseWriter, err error) {
 		fail(w, 404, "not found")
 		return
 	}
-	slog.Error("database operation failed", "error", err)
+	telemetry.Error(r.Context(), "database operation failed", err)
 	fail(w, 500, "database operation failed")
 }
 func page(r *http.Request) (int, int) {

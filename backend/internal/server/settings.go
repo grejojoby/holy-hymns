@@ -23,7 +23,7 @@ func (s *Server) saveCategory(w http.ResponseWriter, r *http.Request) {
 	}
 	tx, e := beginContent(r.Context(), s.DB)
 	if e != nil {
-		dbError(w, e)
+		dbError(w, r, e)
 		return
 	}
 	defer tx.Rollback(r.Context())
@@ -49,19 +49,19 @@ func (s *Server) saveCategory(w http.ResponseWriter, r *http.Request) {
 			fail(w, 409, "a category with this name and kind already exists")
 			return
 		}
-		dbError(w, e)
+		dbError(w, r, e)
 		return
 	}
 	if e = change(r.Context(), tx, "category", ""); e != nil {
-		dbError(w, e)
+		dbError(w, r, e)
 		return
 	}
 	if e = audit(r.Context(), tx, r, "category.save", cid); e != nil {
-		dbError(w, e)
+		dbError(w, r, e)
 		return
 	}
 	if e = tx.Commit(r.Context()); e != nil {
-		dbError(w, e)
+		dbError(w, r, e)
 		return
 	}
 	c.ID = cid
@@ -74,7 +74,7 @@ func (s *Server) deleteCategory(w http.ResponseWriter, r *http.Request) {
 	}
 	tx, e := beginContent(r.Context(), s.DB)
 	if e != nil {
-		dbError(w, e)
+		dbError(w, r, e)
 		return
 	}
 	defer tx.Rollback(r.Context())
@@ -84,7 +84,7 @@ func (s *Server) deleteCategory(w http.ResponseWriter, r *http.Request) {
 		if e == pgx.ErrNoRows {
 			fail(w, 404, "category not found")
 		} else {
-			dbError(w, e)
+			dbError(w, r, e)
 		}
 		return
 	}
@@ -95,23 +95,23 @@ func (s *Server) deleteCategory(w http.ResponseWriter, r *http.Request) {
 	// Keep historical revisions intact. Active drafts/public snapshots lose the category, and drafts' version guards advance.
 	_, e = tx.Exec(r.Context(), `UPDATE songs SET draft=jsonb_set(draft,'{categoryIds}',COALESCE(draft->'categoryIds','[]'::jsonb)-$1),published=CASE WHEN published IS NULL THEN NULL ELSE jsonb_set(published,'{categoryIds}',COALESCE(published->'categoryIds','[]'::jsonb)-$1) END,version=version+1,updated_at=now() WHERE (draft->'categoryIds') ? $1 OR (published->'categoryIds') ? $1`, cid)
 	if e != nil {
-		dbError(w, e)
+		dbError(w, r, e)
 		return
 	}
 	if _, e = tx.Exec(r.Context(), `DELETE FROM categories WHERE id=$1`, cid); e != nil {
-		dbError(w, e)
+		dbError(w, r, e)
 		return
 	}
 	if e = change(r.Context(), tx, "category", ""); e != nil {
-		dbError(w, e)
+		dbError(w, r, e)
 		return
 	}
 	if e = audit(r.Context(), tx, r, "category.delete", cid); e != nil {
-		dbError(w, e)
+		dbError(w, r, e)
 		return
 	}
 	if e = tx.Commit(r.Context()); e != nil {
-		dbError(w, e)
+		dbError(w, r, e)
 		return
 	}
 	w.WriteHeader(204)
@@ -136,13 +136,13 @@ func (s *Server) saveConfig(w http.ResponseWriter, r *http.Request) {
 	raw, _ := json.Marshal(c)
 	tx, e := beginContent(r.Context(), s.DB)
 	if e != nil {
-		dbError(w, e)
+		dbError(w, r, e)
 		return
 	}
 	defer tx.Rollback(r.Context())
 	tag, e := tx.Exec(r.Context(), `UPDATE app_config SET content=$1,version=version+1 WHERE version=$2`, raw, c.Version)
 	if e != nil {
-		dbError(w, e)
+		dbError(w, r, e)
 		return
 	}
 	if tag.RowsAffected() == 0 {
@@ -150,15 +150,15 @@ func (s *Server) saveConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if e = change(r.Context(), tx, "config", ""); e != nil {
-		dbError(w, e)
+		dbError(w, r, e)
 		return
 	}
 	if e = audit(r.Context(), tx, r, "config.save", "app"); e != nil {
-		dbError(w, e)
+		dbError(w, r, e)
 		return
 	}
 	if e = tx.Commit(r.Context()); e != nil {
-		dbError(w, e)
+		dbError(w, r, e)
 		return
 	}
 	s.config(w, r)

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log/slog"
 	"net"
 	"net/http"
 	"net/netip"
@@ -17,6 +16,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"holyhymns/internal/telemetry"
 )
 
 type Config struct {
@@ -175,8 +175,8 @@ func writeError(w http.ResponseWriter, status int, code, message string) {
 func ok(w http.ResponseWriter, message string) {
 	writeJSON(w, 200, map[string]string{"message": message})
 }
-func internal(w http.ResponseWriter, err error) {
-	slog.Error("identity operation failed", "error", err)
+func internal(w http.ResponseWriter, r *http.Request, err error) {
+	telemetry.Error(r.Context(), "identity operation failed", err)
 	writeError(w, 500, "internal_error", "This action could not be completed. Please try again.")
 }
 func conflict(err error) bool {
@@ -221,7 +221,7 @@ func (s *Service) rate(w http.ResponseWriter, r *http.Request, key string, max i
 	var n int
 	err := s.db.QueryRow(r.Context(), `INSERT INTO auth_rate_limits(bucket,hits,reset_at) VALUES($1,1,now()+make_interval(secs => $2)) ON CONFLICT(bucket) DO UPDATE SET hits=CASE WHEN auth_rate_limits.reset_at<=now() THEN 1 ELSE auth_rate_limits.hits+1 END,reset_at=CASE WHEN auth_rate_limits.reset_at<=now() THEN excluded.reset_at ELSE auth_rate_limits.reset_at END RETURNING hits`, tokenHash(key), period.Seconds()).Scan(&n)
 	if err != nil {
-		internal(w, err)
+		internal(w, r, err)
 		return false
 	}
 	if n > max {

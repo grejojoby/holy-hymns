@@ -20,6 +20,7 @@ import (
 	"holyhymns/internal/importer"
 	"holyhymns/internal/migrations"
 	"holyhymns/internal/server"
+	"holyhymns/internal/telemetry"
 )
 
 func env(name, def string) string {
@@ -44,11 +45,27 @@ func list(name string) []string {
 	}
 	return out
 }
-func main() {
-	if e := run(); e != nil {
-		slog.Error("Holy Hymns stopped", "error", e)
-		os.Exit(1)
+func main() { os.Exit(execute()) }
+func execute() int {
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stderr, nil)))
+	// Health probes run in separate processes; do not create an SDK per probe.
+	health := len(os.Args) > 1 && os.Args[1] == "health"
+	if !health {
+		if err := telemetry.Init(); err != nil {
+			slog.Error("Sentry configuration is invalid")
+			return 1
+		}
+		defer telemetry.Flush()
 	}
+	if e := run(); e != nil {
+		if health {
+			slog.Error("health check failed", "error", e)
+		} else {
+			telemetry.Error(telemetry.Entry(context.Background(), "command"), "Holy Hymns stopped", e)
+		}
+		return 1
+	}
+	return 0
 }
 func run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -56,6 +73,17 @@ func run() error {
 	cmd := "serve"
 	if len(os.Args) > 1 {
 		cmd = os.Args[1]
+	}
+	if cmd == "sentry-test" {
+		if os.Getenv("SENTRY_DSN") == "" {
+			return errors.New("SENTRY_DSN is required")
+		}
+		id := telemetry.Error(telemetry.Entry(ctx, "verification"), "Holy Hymns Sentry verification", errors.New("synthetic verification"))
+		if id == nil || !telemetry.Flush() {
+			return errors.New("Sentry event could not be queued or flushed")
+		}
+		fmt.Println("Sentry verification event:", *id)
+		return nil
 	}
 	if cmd == "export-lyrics" {
 		return exportLyrics(ctx, os.Args[2:])
@@ -209,7 +237,7 @@ func maintain(ctx context.Context, db *pgxpool.Pool) {
 	defer ticker.Stop()
 	for {
 		if _, e := db.Exec(ctx, `DELETE FROM analytics_daily WHERE day<CURRENT_DATE-90; DELETE FROM content_changes WHERE created_at<now()-interval '7 days'; DELETE FROM admin_audit WHERE created_at<now()-interval '365 days'; DELETE FROM import_runs WHERE created_at<now()-interval '90 days'`); e != nil && ctx.Err() == nil {
-			slog.Error("retention cleanup", "error", e)
+			telemetry.Error(telemetry.Entry(ctx, "catalog_retention"), "retention cleanup", e)
 		}
 		select {
 		case <-ctx.Done():

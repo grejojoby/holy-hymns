@@ -33,6 +33,14 @@ const config: ExpoConfig = {
     },
   },
   plugins: [
+    [
+      "@sentry/react-native/expo",
+      {
+        organization: "grejo",
+        project: "holy-hymns-mobile",
+        url: "https://sentry.io/",
+      },
+    ],
     "expo-secure-store",
     [
       "expo-splash-screen",

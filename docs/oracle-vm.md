@@ -18,6 +18,7 @@ Initially deployed and verified on 19 September 2026. The public domain was upda
 | Database volume | `holy-hymns_postgres_data` |
 | Host Caddy site file | `/etc/caddy/hosts/holyhymns-backend.grejo.in` |
 | Website files | `/var/www/holy-hymns/current` → `releases/20261002-93e0ff754838` |
+| Backend release | `/opt/holy-hymns/current` → `releases/e62daed2d81663b8320f9a720781faccc164762d-20261002114300-1` |
 
 The database password and 32-byte mail encryption key were generated on the VM and never copied into the repository or chat. `PUBLIC_URL` and `ALLOWED_ORIGIN` use the HTTPS hostname. `COMPOSE_PROFILES` is empty: the existing host Caddy handles HTTPS, and remote backups remain disabled.
 
@@ -73,9 +74,17 @@ Verification passed for the production build and TypeScript check, public HTML/a
 
 To roll back a later web build, atomically point `current` to the retained previous release. The configuration before the website switch is saved at `/opt/holy-hymns/ops/website-activate-20261002T111434Z/holy-hymns.caddy`. Restoring that file, validating the complete Caddyfile and reloading Caddy returns the root to API-only service while preserving the new backend alias. The earlier `/opt/holy-hymns/ops/website-split-20261002T110939Z` backup also includes container state and Caddy file hashes. No database or image rollback is needed for this website change.
 
+## Sentry backend deployment — 2 October 2026
+
+The owner approved a backend-only deployment while mobile remained blocked by the existing Expo tooling dependency audit. The tested ARM64 image `holy-hymns:sentry-e62daed` was transferred over SSH and activated at 11:49 UTC. Its image ID is `sha256:48dd440a9c0dbb3bf3c750aef771b7d5feefc850fa29422e4433f2ed58a3363a`, built from commit `e62daed2d81663b8320f9a720781faccc164762d`. The later merge from main changed no backend source. Sentry identifies this image as `holy-hymns-backend@e62daed`; its private VM configuration uses environment `production`.
+
+The deployment held the normal deployment lock and recreated only `api`, using `--no-deps --no-build --pull never --wait`. Local and public health checks passed, and both API hostnames returned generated `X-Request-ID` headers. The website origin can read that header through CORS. The database and all other containers retained their IDs and start times; the website release stayed unchanged. The CLI probe in the live API container produced Sentry event `f3b52a30bd7243e581f8fa7ea65d3c1b`, confirmed received in environment `verification` with the expected release and Linux runtime. The API performed its normal startup migration check, with no new migrations in this change. No separate migration container or mobile/website release was deployed.
+
+The release directory contains private `sentry-deployment.json`, deployment diagnostics, and before/after container records. `previous` points to `releases/4850dffaee603ca90a8f4427ca10263a0b1c75c6-35614551362-1`. For an API rollback, acquire `/opt/holy-hymns/.deploy.lock`, select that retained directory as `release_dir` in the operations helper above, and run `hh_compose up -d --no-deps --no-build --pull never --wait api`. Verify health before atomically restoring the `current` symlink. Keep database and website state unchanged. This manual Sentry release uses a local image tag; the strict GHCR deployment helper cannot redeploy it. Preserve the local image until a normal digest-based release replaces it.
+
 ## Bootstrap and GitHub Actions
 
-The first deployment used local ARM64 image `holy-hymns:vm-20260919`, image ID `sha256:bcc50433836ba38d5f2803b31a7bb59d67630288845b8f6b1797cae4ae541a31`, transferred over SSH. `/opt/holy-hymns/current` points at `releases/bcc50433836ba38d5f2803b31a7bb59d6763028884-1789837653-1`. This bootstrap directory uses the image-ID prefix, not a Git commit. Its `bootstrap.json` records provenance.
+The first deployment used local ARM64 image `holy-hymns:vm-20260919`, image ID `sha256:bcc50433836ba38d5f2803b31a7bb59d67630288845b8f6b1797cae4ae541a31`, transferred over SSH. Its release directory was `releases/bcc50433836ba38d5f2803b31a7bb59d6763028884-1789837653-1`. This bootstrap directory uses the image-ID prefix, not a Git commit. Its `bootstrap.json` records provenance.
 
 GitHub Actions still requires GitHub authentication/publication and repository secrets. Use `VM_HOST=140.238.160.97`, `VM_USER=holyhymns-deploy`, and `VM_DEPLOY_PATH=/opt/holy-hymns`; follow [ci-cd.md](ci-cd.md) for the deployment SSH key, verified host key, free-usage limits and activation. Future deployments reuse `.env`, project networks and the database volume, and pull immutable multi-platform GHCR images.
 

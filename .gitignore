@@ -21,5 +21,7 @@ mobile/ios/
 mobile/android/
 backend/holyhymns
 artifacts/
+sentry.properties
+mobile/sentry.options.json
 __pycache__/
 *.pyc

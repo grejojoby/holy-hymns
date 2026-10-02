@@ -99,6 +99,8 @@ Run database-backed tests against a disposable PostgreSQL database using the tes
 
 See [the verification record](docs/verification.md) for the bounded local load check and repeatable encrypted restore fixture.
 
+See [Sentry error monitoring](docs/sentry.md) for backend/mobile configuration, private source-map credentials and event verification.
+
 ## Layout
 
 - `backend`: REST API, authentication, catalogue, migrations and Blogger import.
