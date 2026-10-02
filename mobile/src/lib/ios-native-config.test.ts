@@ -98,6 +98,21 @@ test("native prebuild adopts scenes while preserving links, splash, and Personal
       ),
     );
     assert.equal(info.UILaunchStoryboardName, "SplashScreen");
+    assert.equal(info.UIRequiresFullScreen, false);
+    assert.deepEqual(
+      new Set(info["UISupportedInterfaceOrientations~ipad"]),
+      new Set([
+        "UIInterfaceOrientationPortrait",
+        "UIInterfaceOrientationPortraitUpsideDown",
+        "UIInterfaceOrientationLandscapeLeft",
+        "UIInterfaceOrientationLandscapeRight",
+      ]),
+    );
+    const project = readFileSync(
+      join(fixture, "ios", "HolyHymns.xcodeproj", "project.pbxproj"),
+      "utf8",
+    );
+    assert.match(project, /TARGETED_DEVICE_FAMILY = "1,2"/);
     const entitlements = plist.parse(
       readFileSync(join(appDirectory, "HolyHymns.entitlements"), "utf8"),
     );

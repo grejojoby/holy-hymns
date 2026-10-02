@@ -162,7 +162,15 @@ export function SongContent({ song }: { song: Song }) {
     </View>
   );
 }
-export function SongScreen({ id, close }: { id: string; close: () => void }) {
+export function SongScreen({
+  id,
+  close,
+  embedded = false,
+}: {
+  id: string;
+  close: () => void;
+  embedded?: boolean;
+}) {
   const { revision, favorites, toggleFavorite, preferences, track } = useApp();
   const theme = useTheme();
   const song = useResource<Song>(`/songs/${id}`, revision);
@@ -207,8 +215,8 @@ export function SongScreen({ id, close }: { id: string; close: () => void }) {
         }}
       >
         <Button
-          title="Back"
-          icon="arrow-back"
+          title={embedded ? "Close hymn" : "Back"}
+          icon={embedded ? "close" : "arrow-back"}
           variant="quiet"
           onPress={close}
         />

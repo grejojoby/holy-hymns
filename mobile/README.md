@@ -1,6 +1,12 @@
 # Holy Hymns mobile app
 
-React Native and Expo SDK 57; one codebase for iOS and Android. The optional web preview uses the same reader and admin UI. No hosted Expo services or paid Google sign-in packages are required.
+React Native and Expo SDK 57; one codebase for iPhone, iPadOS and Android phones/tablets. The optional web preview uses the same reader and admin UI. No hosted Expo services or paid Google sign-in packages are required.
+
+On wide windows the hymn library and reader appear side by side. Narrow windows,
+including iPad multitasking windows, use the phone navigation. The layout follows
+the available window width and accessibility font scale. Resizing keeps the
+current hymn, reader scroll position and search state; choosing a different hymn
+starts its reader at the top. Accounts and administration use the full window.
 
 ## Local development
 
@@ -16,6 +22,69 @@ npm run android
 Native commands create a local development build. Google authentication needs this build and will not work in Expo Go. Xcode (including an iOS simulator) or an Android SDK/emulator is required. Use your computer's LAN address for a physical device; Android emulator `localhost` refers to the emulator, so use `http://10.0.2.2:8080/v1`. Use HTTPS for deployed builds. Local HTTP development uses the development build's platform transport configuration; never enable unrestricted cleartext transport in a release.
 
 Native identifiers default to `org.holyhymns.app`. Set `IOS_BUNDLE_ID` and `ANDROID_PACKAGE` before registering OAuth clients or signing releases. No EAS subscription is needed: archive the generated iOS project in Xcode and build/sign an Android app bundle with Gradle or Android Studio.
+
+## Build and install locally
+
+Run these commands from `mobile/` after `npm ci` and configuring `.env`. For the
+existing deployed catalogue use
+`EXPO_PUBLIC_API_URL=https://holyhymns-backend.grejo.in/v1`. The API URL is embedded
+at build time: rebuild when changing it. For exports after changing environments,
+pass `--clear` to avoid retaining a previous Metro transform cache.
+
+| Target | Development build | Standalone local Release build |
+| --- | --- | --- |
+| iPhone simulator | `npm run ios -- --device` and choose an iPhone | `npm run ios:release -- --device` and choose an iPhone simulator |
+| iPad simulator | `npm run ios -- --device` and choose an iPad | `npm run ios:release -- --device` and choose an iPad simulator |
+| Connected iPhone/iPad | `npm run ios -- --device` | `npm run ios:release -- --device` with signing configured below |
+| Android emulator/device | `npm run android -- --device` | `npm run android:release -- --device` |
+
+iPhone and iPad share one universal iOS target. No separate iPad project or bundle
+identifier is needed. Both orientations are supported, and full-screen-only mode
+is disabled. The side-by-side layout starts at 900 usable points at normal text
+size; smaller iPads in portrait use the single-pane reader.
+
+For Android, install Android Studio, its SDK command-line tools/platform tools,
+an emulator image, and the SDK/NDK versions requested by the generated Gradle
+project. Set `ANDROID_HOME` to your SDK directory (typically
+`$HOME/Library/Android/sdk` on macOS) and use a compatible JDK, such as Android
+Studio's bundled runtime. Start an emulator, or connect a device with USB
+debugging enabled and authorize the computer on the device.
+
+To generate projects for the IDEs:
+
+```sh
+npm run prebuild:ios
+npm run prebuild:android
+```
+
+Open `ios/HolyHymns.xcworkspace` in Xcode or `android/` in Android Studio. Generated
+native directories are ignored; `app.config.ts` and config plugins are the source
+of truth. Prebuild regenerates them by default. Preserve needed native changes
+in config plugins; use `--no-clean` when intentionally updating an existing
+project. If installing Pods manually, run `pod install` **inside `mobile/ios`** so
+Expo resolves `Podfile.properties.json`, including the Google modular headers.
+
+To build an Android APK without installing it, generate the Android project, then:
+
+```sh
+cd android
+./gradlew assembleRelease
+```
+
+The APK is `android/app/build/outputs/apk/release/app-release.apk` relative to
+`mobile/`. Install it with `adb install -r PATH_TO_APK`. The generated project's
+Release variant uses a **debug signing key** for local testing. This APK embeds
+JavaScript and fonts and runs without Metro, but it is not a store-signed release.
+Use your own upload keystore and Android Studio's **Generate Signed Bundle / APK**
+for distribution. Existing installs signed with a different key cannot be
+updated with this APK; keep the signing key consistent to preserve app data.
+
+For App Store delivery use Xcode **Product → Archive** with an Apple Developer
+team. Increase `ios.buildNumber` / `android.versionCode` in `app.config.ts` before
+each store upload (both start at 1), then regenerate. The version displayed to
+users is `version`. Store submission and signing accounts are separate steps.
+
+See [Expo local production builds](https://docs.expo.dev/guides/local-app-production/).
 
 ## Install a Release build on your iPhone
 

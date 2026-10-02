@@ -6,7 +6,13 @@ import { mapConcurrent } from "../lib/logic";
 import type { Song } from "../lib/types";
 import { Button, Empty, Loading, Notice, Page } from "../components/ui";
 import { SongRow } from "../components/SongRow";
-export function SavedScreen({ openSong }: { openSong: (id: string) => void }) {
+export function SavedScreen({
+  openSong,
+  selectedSong,
+}: {
+  openSong: (id: string) => void;
+  selectedSong?: string | null;
+}) {
   const { favorites, revision, syncError, syncFavorites } = useApp();
   const [songs, setSongs] = useState<Song[]>([]);
   const [error, setError] = useState("");
@@ -70,6 +76,7 @@ export function SavedScreen({ openSong }: { openSong: (id: string) => void }) {
             <SongRow
               key={song.id}
               song={song}
+              selected={selectedSong === song.id}
               saved
               onPress={() => openSong(song.id)}
             />

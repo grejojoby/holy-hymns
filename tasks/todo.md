@@ -18,3 +18,10 @@
 - [ ] Verify unused OCI free quota and remote encrypted backup/restore
 - [ ] Real iPhone, native Android build/device smoke and screen-reader checks
 - [ ] Store signing, memberships and App Review submission
+
+## Native delivery follow-up
+
+- [x] Responsive library/reader with selected rows; verify resize and navigation
+- [x] Repeatable native configuration and release commands; test generated targets
+- [x] Typecheck, 21 tests, platform exports and iPhone/iPad simulator Release build
+- [x] Document install commands, results and remaining platform requirements
