@@ -46,6 +46,8 @@ JavaScript reports remove requests, user data, extra fields, breadcrumbs and fra
 
 ## Verification and troubleshooting
 
+The backend is live as of 2 October 2026. An on-VM probe was received as event `f3b52a30bd7243e581f8fa7ea65d3c1b`, release `holy-hymns-backend@e62daed`, environment `verification`; see the [deployment record and rollback instructions](oracle-vm.md#sentry-backend-deployment--2-october-2026). Both projects have verified IP scrubbing. Mobile integration and source-map uploads are ready, but no mobile or website release was deployed. Mobile event receipt and native crash symbolication still require a release-build test. The mobile release remains blocked by the existing unpatched `node-forge` advisory [GHSA-86w9-cpqp-85rv](https://github.com/advisories/GHSA-86w9-cpqp-85rv); the dependency audit gate is unchanged.
+
 The CLI-only probe sends a labeled synthetic event without affecting HTTP routes:
 
 ```sh
