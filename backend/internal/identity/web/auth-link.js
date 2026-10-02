@@ -12,7 +12,7 @@
     ],
     "reset-password": [
       "Reset your password",
-      "Open Holy Hymns to choose a new password.",
+      "Choose a new password for your Holy Hymns account.",
     ],
     "accept-invitation": [
       "Accept your invitation",
@@ -51,7 +51,9 @@
     "holyhymns://auth/" + action + "?token=" + encodeURIComponent(token);
   openApp.addEventListener("click", () => {
     status.textContent = token
-      ? "If the app did not open, use your phone's browser or copy the code below."
+      ? action === "reset-password"
+        ? "If the app did not open, choose Reset in browser instead."
+        : "If the app did not open, use your phone's browser or copy the code below."
       : "Open Holy Hymns on your phone and sign in from the Account screen.";
   });
   status.textContent =
@@ -67,6 +69,123 @@
         "Select and copy the code, then paste it into Holy Hymns.";
     }
   });
+  if (action === "reset-password") {
+    const form = get("reset-form");
+    const password = get("password");
+    const confirmation = get("confirm-password");
+    const reset = get("reset");
+    const browser = get("continue-browser");
+    // Device hints only choose the initial view; the browser path stays available.
+    // iPadOS can report a desktop Mac user agent, with multiple touch points.
+    const mobile =
+      navigator.userAgentData?.mobile === true ||
+      /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+      (/Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+    const showForm = () => {
+      form.hidden = false;
+      get("controls").hidden = true;
+      get("description").textContent = description;
+      status.textContent = "Enter and confirm your new password.";
+    };
+    const discardReset = () => {
+      get("token").value = token = "";
+      params.delete("token");
+      password.value = confirmation.value = "";
+      form.hidden = true;
+      get("manual").hidden = true;
+      get("controls").hidden = true;
+      openApp.href = "holyhymns://";
+      get("return-web").hidden = false;
+    };
+    browser.addEventListener("click", () => {
+      showForm();
+      password.focus();
+    });
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (reset.disabled || form.hidden || !token) return;
+      if (
+        [...password.value].length < 12 ||
+        new TextEncoder().encode(password.value).length > 1024
+      ) {
+        status.textContent = "Use at least 12 characters (maximum 1024 bytes).";
+        password.focus();
+        return;
+      }
+      if (password.value !== confirmation.value) {
+        status.textContent = "Your passwords do not match. Enter them again.";
+        confirmation.focus();
+        return;
+      }
+      reset.disabled = password.disabled = confirmation.disabled = true;
+      status.textContent = "Resetting your password…";
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      try {
+        // Only an explicit form submission can consume the reset token.
+        const response = await fetch("../v1/auth/reset-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, password: password.value }),
+          credentials: "omit",
+          cache: "no-store",
+          redirect: "error",
+          referrerPolicy: "no-referrer",
+          signal: controller.signal,
+        });
+        if (response.ok) {
+          discardReset();
+          get("title").textContent = "Password reset";
+          document.title = "Password reset | Holy Hymns";
+          get("description").textContent =
+            "Sign in to Holy Hymns with your new password.";
+          status.textContent = "Your password has been updated.";
+        } else if (response.status === 400) {
+          const error = await response.json();
+          if (error.code === "invalid_password") {
+            status.textContent =
+              "Use at least 12 characters (maximum 1024 bytes).";
+          } else if (error.code === "invalid_token") {
+            discardReset();
+            status.textContent =
+              "This link is invalid, expired, or already used. Return to Holy Hymns and request a new password reset email.";
+          } else {
+            status.textContent =
+              "Could not reset your password. Try again shortly.";
+          }
+        } else if (response.status === 429) {
+          status.textContent =
+            "Too many attempts. Wait a while before trying again.";
+        } else {
+          status.textContent =
+            "Password reset is unavailable right now. Try again shortly.";
+        }
+      } catch {
+        status.textContent =
+          "Could not confirm the reset. Check your connection and try again. If it already succeeded, sign in with your new password.";
+      } finally {
+        clearTimeout(timeout);
+        reset.disabled = password.disabled = confirmation.disabled = false;
+      }
+    });
+    if (mobile) {
+      browser.hidden = false;
+      get("description").textContent =
+        "Continue in Holy Hymns to choose a new password.";
+      get("app-help").textContent =
+        "If the app does not open, tap Open Holy Hymns or reset in your browser instead.";
+      status.textContent = "Opening Holy Hymns…";
+      try {
+        location.assign(openApp.href);
+      } catch {
+        status.textContent =
+          "Tap Open Holy Hymns or reset in your browser instead.";
+      }
+    } else {
+      showForm();
+    }
+    return;
+  }
   const verify = get("verify");
   if (action !== "verify") return;
   verify.hidden = false;

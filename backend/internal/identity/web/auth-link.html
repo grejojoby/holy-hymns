@@ -18,11 +18,41 @@
         <button id="verify" class="button secondary" type="button" hidden>
           Verify in browser
         </button>
+        <button
+          id="continue-browser"
+          class="button secondary"
+          type="button"
+          hidden
+        >
+          Reset in browser instead
+        </button>
         <p id="app-help" class="hint">
           On your phone, tap Open Holy Hymns and allow your browser to open the
           app. If nothing happens, try Safari or Chrome, or use the code below.
         </p>
       </div>
+      <form id="reset-form" method="post" hidden>
+        <label for="password">New password</label>
+        <input
+          id="password"
+          type="password"
+          autocomplete="new-password"
+          aria-describedby="password-help"
+          required
+        />
+        <p id="password-help" class="hint">
+          Use at least 12 characters (maximum 1024 bytes).
+        </p>
+        <label for="confirm-password">Confirm new password</label>
+        <input
+          id="confirm-password"
+          type="password"
+          autocomplete="new-password"
+          required
+        />
+        <button id="reset" class="button" type="submit">Reset password</button>
+      </form>
+      <a id="return-web" class="button" href="/" hidden>Return to Holy Hymns</a>
       <p id="status" role="status" aria-live="polite" aria-atomic="true">
         Enable JavaScript to use this page, or paste the code from your email
         into Holy Hymns.
