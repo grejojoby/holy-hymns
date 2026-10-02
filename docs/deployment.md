@@ -22,7 +22,7 @@ docker save -o holy-hymns-images.tar holy-hymns:release holy-hymns-backup:releas
 
 Transfer the archive and deployment files securely to the VM; `docker load -i holy-hymns-images.tar` installs the built images. Set `HOLY_HYMNS_IMAGE=holy-hymns:release` and `HOLY_HYMNS_BACKUP_IMAGE=holy-hymns-backup:release`. The backend Dockerfile pins Go 1.25.5; runtime image minor tags should be refreshed through a tested release rather than unattended production pulls.
 
-Set `PUBLIC_URL=https://your-api-domain`, exact `ALLOWED_ORIGIN` if you host a web client, and production secrets. Keep `API_BIND=127.0.0.1`. Set the API domain in the mobile build too.
+Set `PUBLIC_URL` to the HTTPS origin serving the account email landing pages, exact `ALLOWED_ORIGIN` for the web client, and production secrets. On the deployed VM both use `https://holyhymns.in`, while web/native builds use `EXPO_PUBLIC_API_URL=https://backend.holyhymns.in/v1`. Keep `API_BIND=127.0.0.1`. See [website deployment](oracle-vm.md#website-and-backend-domains--2-october-2026) for the static lyrics website and host Caddy routing.
 
 If the VM already has a reverse proxy, forward HTTPS to `127.0.0.1:${API_PORT}` (default `8080`, deployed VM `18080`) and preserve SSE streaming. Set `API_PORT` to an unused host port; the container continues listening on port `8080`. Start the default stack:
 
