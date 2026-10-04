@@ -84,7 +84,7 @@ func (s *Server) getSong(w http.ResponseWriter, r *http.Request) {
 func (s *Server) categories(w http.ResponseWriter, r *http.Request) {
 	u := identity.Current(r)
 	staff := u != nil && (u.Role == "admin" || u.Role == "owner")
-	rows, err := s.DB.Query(r.Context(), `SELECT id::text,name,name_malayalam,kind,position,version FROM categories c WHERE $1 OR EXISTS(SELECT 1 FROM songs s WHERE s.published IS NOT NULL AND (s.published->'categoryIds') ? c.id::text) ORDER BY position,name`, staff)
+	rows, err := s.DB.Query(r.Context(), `SELECT id::text,name,name_malayalam,kind,position,version FROM categories c WHERE $1 OR EXISTS(SELECT 1 FROM category_import_labels l WHERE l.category_id=c.id) OR EXISTS(SELECT 1 FROM songs s WHERE s.published IS NOT NULL AND (s.published->'categoryIds') ? c.id::text) ORDER BY position,name`, staff)
 	if err != nil {
 		dbError(w, r, err)
 		return

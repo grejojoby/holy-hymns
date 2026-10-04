@@ -235,6 +235,7 @@
     "/categories": {
       "get": {
         "summary": "List browsing categories",
+        "description": "Includes built-in worship categories even when empty. Other categories are visible to readers when used by a published song; staff can see all categories.",
         "security": [],
         "responses": {
           "200": {

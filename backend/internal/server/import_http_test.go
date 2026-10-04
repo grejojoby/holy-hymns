@@ -92,6 +92,10 @@ func TestHTTPImportDryRunWritesNothingAndAuditFailureRollsBack(t *testing.T) {
 	s, db, token := integration(t)
 	ctx := context.Background()
 	entry := extractedEntry()
+	var seededCategories int
+	if err := db.QueryRow(ctx, `SELECT count(*) FROM categories`).Scan(&seededCategories); err != nil {
+		t.Fatal(err)
+	}
 	if report := importReport(t, request(s, "POST", "/v1/admin/imports/lyrics", token, map[string]any{"entry": entry, "dryRun": true})); report.Created != 1 {
 		t.Fatal(report)
 	}
@@ -99,7 +103,11 @@ func TestHTTPImportDryRunWritesNothingAndAuditFailureRollsBack(t *testing.T) {
 		t.Helper()
 		for _, table := range []string{"songs", "categories", "song_revisions", "import_runs", "admin_audit"} {
 			var n int
-			if err := db.QueryRow(ctx, "SELECT count(*) FROM "+table).Scan(&n); err != nil || n != 0 {
+			want := 0
+			if table == "categories" {
+				want = seededCategories
+			}
+			if err := db.QueryRow(ctx, "SELECT count(*) FROM "+table).Scan(&n); err != nil || n != want {
 				t.Fatalf("%s contains %d rows: %v", table, n, err)
 			}
 		}

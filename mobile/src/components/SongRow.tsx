@@ -2,7 +2,6 @@ import React from "react";
 import { Pressable, Text, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import type { Song } from "../lib/types";
-import { useApp } from "../hooks/AppContext";
 import { Copy, useTheme } from "./ui";
 
 export function SongRow({
@@ -18,14 +17,8 @@ export function SongRow({
   onPress: () => void;
 }) {
   const theme = useTheme();
-  const { preferences } = useApp();
-  const preferMalayalam = preferences.script === "malayalam";
-  const primary = preferMalayalam
-    ? song.titleMalayalam || song.title
-    : song.title || song.titleMalayalam;
-  const secondary = preferMalayalam
-    ? song.titleMalayalam && song.title
-    : song.title && song.titleMalayalam;
+  const primary = song.title || song.titleMalayalam;
+  const secondary = song.title && song.titleMalayalam;
   const malayalam = /[\u0D00-\u0D7F]/.test(primary);
   return (
     <Pressable
@@ -50,8 +43,8 @@ export function SongRow({
             fontFamily: malayalam ? "Malayalam" : undefined,
             fontWeight: malayalam ? "400" : "500",
             color: theme.ink,
-            fontSize: 16,
-            lineHeight: malayalam ? 27 : 23,
+            fontSize: 18,
+            lineHeight: malayalam ? 29 : 26,
           }}
         >
           {primary}
@@ -63,8 +56,8 @@ export function SongRow({
               fontFamily: /[\u0D00-\u0D7F]/.test(secondary)
                 ? "Malayalam"
                 : undefined,
-              fontSize: 13,
-              lineHeight: 21,
+              fontSize: 16,
+              lineHeight: 26,
             }}
           >
             {secondary}

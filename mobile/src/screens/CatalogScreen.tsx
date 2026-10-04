@@ -261,16 +261,11 @@ export function CatalogScreen({
                 fontSize: 13,
                 lineHeight: 22,
                 fontFamily:
-                  selectedCategory?.nameMalayalam ||
-                  (letter && alphabet === "malayalam")
-                    ? "Malayalam"
-                    : undefined,
+                  letter && alphabet === "malayalam" ? "Malayalam" : undefined,
               }}
             >
               {[
-                selectedCategory?.nameMalayalam ||
-                  selectedCategory?.name ||
-                  (category ? "Selected category" : ""),
+                selectedCategory?.name || (category ? "Selected category" : ""),
                 letter ? `Starts with ${letter}` : "",
               ]
                 .filter(Boolean)
@@ -333,35 +328,14 @@ export function CatalogScreen({
                 active={!category}
                 onPress={() => selectCategory("")}
               />
-              {(["purpose", "occasion", "theme"] as const).map((kind) => {
-                const items = matchingCategories.filter(
-                  (item) => item.kind === kind,
-                );
-                return items.length ? (
-                  <View key={kind}>
-                    <Copy
-                      muted
-                      style={{ marginTop: 16, marginBottom: 6, fontSize: 13 }}
-                    >
-                      {
-                        {
-                          purpose: "Purpose",
-                          occasion: "Occasion",
-                          theme: "Theme",
-                        }[kind]
-                      }
-                    </Copy>
-                    {items.map((item) => (
-                      <CategoryOption
-                        key={item.id}
-                        label={item.nameMalayalam || item.name}
-                        active={category === item.id}
-                        onPress={() => selectCategory(item.id)}
-                      />
-                    ))}
-                  </View>
-                ) : null;
-              })}
+              {matchingCategories.map((item) => (
+                <CategoryOption
+                  key={item.id}
+                  label={item.name}
+                  active={category === item.id}
+                  onPress={() => selectCategory(item.id)}
+                />
+              ))}
               {!matchingCategories.length && (
                 <Copy muted style={{ paddingVertical: 16 }}>
                   No matching categories.

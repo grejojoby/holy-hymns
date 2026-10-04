@@ -79,15 +79,22 @@ func importEntries(ctx context.Context, db *pgxpool.Pool, entries []importer.Ent
 			report.Created++
 			continue
 		}
-		for _, label := range entry.Labels {
+		// Source labels are metadata. Only explicit worship-category aliases
+		// participate in browsing; artist and album labels never create categories.
+		rows, e := tx.Query(ctx, `SELECT DISTINCT category_id::text FROM category_import_labels WHERE label = ANY($1::text[]) ORDER BY category_id::text`, normalizedLabels(entry.Labels))
+		if e != nil {
+			return report, e
+		}
+		for rows.Next() {
 			var cid string
-			e = tx.QueryRow(ctx, `INSERT INTO categories(name,kind) VALUES($1,'theme') ON CONFLICT(name,kind) DO UPDATE SET name=excluded.name RETURNING id::text`, label).Scan(&cid)
-			if e != nil {
-				break
+			if e = rows.Scan(&cid); e != nil {
+				rows.Close()
+				return report, e
 			}
 			song.CategoryIDs = append(song.CategoryIDs, cid)
 		}
-		if e != nil {
+		rows.Close()
+		if e = rows.Err(); e != nil {
 			return report, e
 		}
 		raw, e := json.Marshal(song)
@@ -95,7 +102,7 @@ func importEntries(ctx context.Context, db *pgxpool.Pool, entries []importer.Ent
 			return report, e
 		}
 		var sid string
-		e = tx.QueryRow(ctx, `INSERT INTO songs(draft,source_id,source_hash,source_html,imported_version) VALUES($1,$2,$3,$4,1) ON CONFLICT(source_id) DO NOTHING RETURNING id::text`, raw, entry.SourceID, entry.Hash, entry.RawHTML).Scan(&sid)
+		e = tx.QueryRow(ctx, `INSERT INTO songs(draft,source_id,source_hash,source_html,source_labels,imported_version) VALUES($1,$2,$3,$4,$5,1) ON CONFLICT(source_id) DO NOTHING RETURNING id::text`, raw, entry.SourceID, entry.Hash, entry.RawHTML, append([]string{}, entry.Labels...)).Scan(&sid)
 		if e == pgx.ErrNoRows {
 			// The shared editorial lock serializes normal import callers. Still
 			// recheck the durable hash if an external writer inserted this source.
@@ -245,4 +252,12 @@ func (s *Server) importLyrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	write(w, 200, report)
+}
+
+func normalizedLabels(labels []string) []string {
+	values := make([]string, len(labels))
+	for i, label := range labels {
+		values[i] = strings.ToLower(strings.TrimSpace(label))
+	}
+	return values
 }
