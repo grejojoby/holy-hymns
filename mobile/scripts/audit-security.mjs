@@ -8,7 +8,18 @@ import {
   verifyPatch,
 } from "./node-forge-patch.mjs";
 
-export function auditBlockers(report, patchedPaths, now = new Date()) {
+import {
+  advisory as bracesAdvisory,
+  reviewBefore as bracesReviewBefore,
+  verifyPatch as verifyBracesPatch,
+} from "./braces-patch.mjs";
+
+export function auditBlockers(
+  report,
+  patchedPaths,
+  now = new Date(),
+  bracesPaths = [],
+) {
   if (
     !report ||
     report.error ||
@@ -27,6 +38,10 @@ export function auditBlockers(report, patchedPaths, now = new Date()) {
     throw new Error(
       "node-forge mitigation review is due; check for an upstream release",
     );
+  if (now >= new Date(bracesReviewBefore))
+    throw new Error(
+      "braces mitigation review is due; check for an upstream release",
+    );
   const vulnerabilities = report.vulnerabilities;
   for (const severity of ["info", "low", "moderate", "high", "critical"]) {
     if (
@@ -38,31 +53,62 @@ export function auditBlockers(report, patchedPaths, now = new Date()) {
       throw new Error("Inconsistent npm audit severity counts");
     }
   }
-  const allowed = (name, seen = new Set()) => {
-    const item = vulnerabilities[name];
-    if (
-      !item ||
-      item.severity !== "high" ||
-      seen.has(name) ||
-      !Array.isArray(item.via) ||
-      !item.via.length
-    )
-      return false;
-    const next = new Set([...seen, name]);
-    return item.via.every((cause) => {
-      if (typeof cause === "string") return allowed(cause, next);
-      return (
-        name === "node-forge" &&
-        cause?.name === "node-forge" &&
-        cause.dependency === "node-forge" &&
-        cause.url === advisory &&
-        cause.range === "<=1.4.0" &&
-        cause.severity === "high" &&
-        Array.isArray(item.nodes) &&
-        item.nodes.length > 0 &&
-        item.nodes.every((path) => patchedPaths.includes(path))
-      );
-    });
+  const mitigations = {
+    "node-forge": { url: advisory, range: "<=1.4.0", paths: patchedPaths },
+    braces: { url: bracesAdvisory, range: "<=3.0.3", paths: bracesPaths },
+  };
+  const allowed = (name) => {
+    // npm's Metro dependency graph contains cycles. Traverse every reachable
+    // cause once; require a verified advisory root and reject any unknown root.
+    const pending = [name];
+    const seen = new Set();
+    const verifiedRoots = new Set();
+    const parents = new Map();
+    while (pending.length) {
+      const current = pending.pop();
+      if (seen.has(current)) continue;
+      seen.add(current);
+      const item = vulnerabilities[current];
+      if (
+        !item ||
+        item.severity !== "high" ||
+        !Array.isArray(item.via) ||
+        !item.via.length
+      )
+        return false;
+      for (const cause of item.via) {
+        if (typeof cause === "string") {
+          if (!parents.has(cause)) parents.set(cause, []);
+          parents.get(cause).push(current);
+          pending.push(cause);
+          continue;
+        }
+        const mitigation = mitigations[current];
+        if (
+          !mitigation ||
+          cause?.name !== current ||
+          cause.dependency !== current ||
+          cause.url !== mitigation.url ||
+          cause.range !== mitigation.range ||
+          cause.severity !== "high" ||
+          !Array.isArray(item.nodes) ||
+          !item.nodes.length ||
+          !item.nodes.every((path) => mitigation.paths.includes(path))
+        )
+          return false;
+        verifiedRoots.add(current);
+      }
+    }
+    const reachable = [...verifiedRoots];
+    for (let i = 0; i < reachable.length; i++) {
+      for (const parent of parents.get(reachable[i]) || []) {
+        if (!verifiedRoots.has(parent)) {
+          verifiedRoots.add(parent);
+          reachable.push(parent);
+        }
+      }
+    }
+    return [...seen].every((node) => verifiedRoots.has(node));
   };
   return Object.entries(vulnerabilities)
     .filter(([name, item]) => {
@@ -82,6 +128,7 @@ if (
   resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
   const paths = verifyPatch();
+  const bracesPaths = verifyBracesPatch();
   const result = spawnSync(
     process.platform === "win32" ? "npm.cmd" : "npm",
     [
@@ -114,7 +161,7 @@ if (
       "npm audit status/counts are inconsistent; refusing to pass security checks",
     );
   }
-  const blockers = auditBlockers(report, paths);
+  const blockers = auditBlockers(report, paths, new Date(), bracesPaths);
   if (blockers.length) {
     console.error(JSON.stringify(report, null, 2));
     throw new Error(
@@ -124,6 +171,11 @@ if (
   console.log(
     "Dependency audit passed: no unmitigated high/critical vulnerabilities.",
   );
+  if (report.vulnerabilities.braces) {
+    console.log(
+      `Mitigated ${bracesAdvisory}: pinned depth-limit backport verified; review before ${bracesReviewBefore}.`,
+    );
+  }
   if (report.vulnerabilities["node-forge"]) {
     console.log(
       `Mitigated ${advisory}: reviewed backport and strict DER validation verified; review before ${reviewBefore}.`,

@@ -20,7 +20,7 @@ Run from `mobile/`:
 npm run audit:security
 ```
 
-This runs the native `npm audit --omit=dev --audit-level=high --json` against the official npm registry. npm still reports the advisory because its database sees the unchanged version number, not the patched source. The wrapper accepts **only this exact advisory and transitive findings caused exclusively by it**, after verifying the installed mitigation. Any other high/critical advisory, unpatched copy, malformed report, network failure or inconsistent result still fails CI. The raw audit is not claimed to be clean.
+This runs the native `npm audit --omit=dev --audit-level=high --json` against the official npm registry. npm still reports the advisory because its database sees the unchanged version number, not the patched source. The wrapper accepts **only the two exact advisories documented here and transitive findings caused exclusively by them**, after verifying every installed mitigation. Metro cycles are traversed without recursion; every reachable finding must lead to a verified advisory root. Cycles without a verified root still fail. Any other high/critical advisory, unpatched copy, malformed report, network failure or inconsistent result still fails CI. The raw audit is not claimed to be clean.
 
 **Review deadline: 16 October 2026 (00:00 UTC).** The gate fails at that deadline until this mitigation is reviewed. Once a maintained upstream release fixes the issue, update the dependency/lockfile, rerun the parser and Expo compatibility tests, remove the local patch and scoped exception, and restore the direct npm audit command. Do not merely extend the deadline or broaden the exception to silence a failure.
 
@@ -29,3 +29,11 @@ This runs the native `npm audit --omit=dev --audit-level=high --json` against th
 The regression reproduces malformed signature acceptance on pristine 1.4.0, and rejects extra children, NULL content, padded OIDs, nonminimal DER lengths and indefinite lengths after patching. Removing the NULL guard makes the behavior test fail. Expo's own certificate validation, CSR verification and SHA256 signing round trip pass. The audit tests cover unrelated advisories, missing patch paths, invalid reports, cyclic dependency causes and expiration. TypeScript, app tests, and web/iOS/Android exports also pass.
 
 Sentry runtime verification is recorded separately in [Sentry monitoring](sentry.md). This change does not publish a mobile app or website release.
+
+## Temporary braces mitigation — 4 October 2026
+
+The category release was blocked by [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm): deeply nested brace/parenthesis patterns can exhaust the recursive AST walkers in `braces <=3.0.3`. Metro and Expo inherit the finding. The npm registry still reports 3.0.3 as latest, with no patched release.
+
+`mobile/scripts/braces-patch.mjs` applies the five source-file changes from [upstream PR #72](https://github.com/micromatch/braces/pull/72), pinned to `28d440b5dd449dbf1fe6f3506cf94ecca4d02660`. This remains an **unmerged proposal**, not an official fixed release. Exact original and patched SHA-256 hashes, substitutions, provenance, and the upstream MIT license are recorded in `braces-patch.json`. Every installed copy from the lockfile is verified; unexpected versions, modified source, and paths outside the installed package fail closed. Installation is offline once npm has fetched dependencies.
+
+The patch limits parser nesting and caller-provided AST depth to 100, accepts stricter limits, and rejects cyclic parent chains during expansion. This intentionally rejects unusually deep patterns. Regression tests first reproduced stack exhaustion without the patch, then verified bounded rejection, brace/parenthesis boundaries, custom ASTs, fractional limits, and ordinary Metro glob/range matching. The audit still blocks unknown advisories, additional unpatched copies, missing causes, and rootless cycles. Both mitigations retain the **16 October 2026** review deadline; no deadline was extended to pass the release.

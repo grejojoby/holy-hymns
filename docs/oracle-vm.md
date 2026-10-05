@@ -106,3 +106,11 @@ The bootstrap `images.env` contains a local tag. If this release becomes `previo
 - SMTP is unset, so registration, recovery and invitations fail closed. Encryption and send limits are configured.
 - Google/Apple remain disabled pending their application credentials.
 - OCI backups remain disabled pending storage credentials, verified unused free capacity and a restore drill. No storage or paid services were provisioned.
+
+## Worship category cleanup — 4 October 2026
+
+The `6cfee70` release stopped at the mobile dependency audit before image publication or deployment. At the owner's request, the already-tested `005_worship_categories.sql` migration was applied directly in one transaction under both migration and editorial advisory locks. A private custom-format PostgreSQL backup and checksum are retained at `/opt/holy-hymns/ops/worship-categories-6cfee70.KtPz7g`.
+
+All 58 original imported category labels were replaced by 18 worship categories. All 288 songs remained published. Transactional assertions verified that draft and published JSON differed only in `categoryIds`; original labels remain in `source_labels`. The migration was recorded in `schema_migrations`, so the next release will not repeat it. Public categories and health were verified after commit.
+
+The backend container was not replaced during this cleanup. Until the updated backend deploys, it still hides empty categories and uses the previous import behavior; avoid importing new songs with legacy labels before that release.

@@ -4,7 +4,7 @@
   "private": true,
   "main": "index.ts",
   "scripts": {
-    "postinstall": "node scripts/node-forge-patch.mjs",
+    "postinstall": "node scripts/node-forge-patch.mjs && node scripts/braces-patch.mjs",
     "audit:security": "node scripts/audit-security.mjs",
     "start": "expo start --dev-client",
     "web": "expo start --web",

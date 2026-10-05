@@ -177,3 +177,60 @@ test("audit rejects expired mitigation, invalid reports, unknown paths and cycli
   cycle.vulnerabilities.expo.via = ["expo"];
   assert.deepEqual(auditBlockers(cycle, paths, now), ["expo"]);
 });
+
+test("audit follows Metro cycles only when every advisory root is verified", () => {
+  const combined = report();
+  combined.vulnerabilities.braces = {
+    severity: "high",
+    nodes: ["node_modules/braces"],
+    via: [
+      {
+        name: "braces",
+        dependency: "braces",
+        severity: "high",
+        range: "<=3.0.3",
+        url: "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+      },
+    ],
+  };
+  combined.vulnerabilities.metro = {
+    severity: "high",
+    via: ["metro-config", "braces"],
+  };
+  combined.vulnerabilities["metro-config"] = {
+    severity: "high",
+    via: ["metro"],
+  };
+  combined.vulnerabilities.expo.via.push("metro");
+  combined.metadata.vulnerabilities.total += 3;
+  combined.metadata.vulnerabilities.high += 3;
+  const bracesPaths = ["node_modules/braces"];
+  assert.deepEqual(auditBlockers(combined, paths, now, bracesPaths), []);
+  assert.deepEqual(auditBlockers(combined, paths, now), [
+    "expo",
+    "braces",
+    "metro",
+    "metro-config",
+  ]);
+  combined.vulnerabilities.braces.nodes.push(
+    "node_modules/other/node_modules/braces",
+  );
+  assert.ok(auditBlockers(combined, paths, now, bracesPaths).includes("expo"));
+  combined.vulnerabilities.braces.nodes.pop();
+  combined.vulnerabilities.braces.via.push({
+    ...cause,
+    name: "braces",
+    dependency: "braces",
+    url: "https://github.com/advisories/unknown",
+  });
+  assert.ok(auditBlockers(combined, paths, now, bracesPaths).includes("expo"));
+});
+
+test("a patched root cannot hide a separate rootless cycle", () => {
+  const graph = report();
+  graph.vulnerabilities.loop = { severity: "high", via: ["loop"] };
+  graph.vulnerabilities.expo.via.push("loop");
+  graph.metadata.vulnerabilities.high++;
+  graph.metadata.vulnerabilities.total++;
+  assert.deepEqual(auditBlockers(graph, paths, now), ["expo", "loop"]);
+});
